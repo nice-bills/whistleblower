@@ -1,0 +1,23 @@
+{
+  "name": "confidential-whistleblower",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Anonymous whistleblower with selective disclosure on Zama FHEVM",
+  "packageManager": "pnpm@10.12.1",
+  "scripts": {
+    "compile": "pnpm --filter @confidential-whistleblower/contracts compile",
+    "test": "pnpm --filter @confidential-whistleblower/contracts test",
+    "dev": "pnpm --filter @confidential-whistleblower/web dev",
+    "lint": "pnpm --filter @confidential-whistleblower/contracts lint"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "license": "MIT",
+  "pnpm": {
+    "overrides": {
+      "@zama-fhe/relayer-sdk": "0.4.1"
+    }
+  }
+}

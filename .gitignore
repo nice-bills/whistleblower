@@ -1,0 +1,15 @@
+node_modules
+package-lock.json
+npm-shrinkwrap.json
+dist
+.DS_Store
+*.log
+.env
+.env.local
+packages/contracts/fhevmTemp
+packages/contracts/artifacts
+packages/contracts/cache
+packages/contracts/coverage
+packages/contracts/types
+packages/contracts/deployments
+packages/web/dist
