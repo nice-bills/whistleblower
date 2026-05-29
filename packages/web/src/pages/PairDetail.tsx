@@ -14,6 +14,7 @@ import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useAccount, useReadContract } from "wagmi";
 import AddressLink from "../components/AddressLink";
+import RevealOnScroll from "../components/RevealOnScroll";
 import StatusMessage from "../components/StatusMessage";
 import TxLink from "../components/TxLink";
 import { useActiveChainId } from "../context/ViewChainContext";
@@ -160,6 +161,7 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
         ← Back to registry
       </Link>
 
+      <RevealOnScroll>
       <header className="page-hero" style={{ paddingTop: 0 }}>
         <p className="page-hero__tag">{valid ? "Valid pair" : "Revoked: do not wrap"}</p>
         <h1 className="pair-heading">
@@ -172,7 +174,9 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
           the underlying token.
         </p>
       </header>
+      </RevealOnScroll>
 
+      <RevealOnScroll delayMs={60}>
       <div className="stat-pills">
         <div className="stat-pill">
           <span className="stat-pill__label">Status</span>
@@ -195,13 +199,15 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
           </span>
         </div>
       </div>
+      </RevealOnScroll>
 
       {!isConnected && (
         <StatusMessage variant="info">Connect a wallet on Sepolia or mainnet to use this pair.</StatusMessage>
       )}
 
       {isConnected && (
-        <div className="flow-grid">
+        <RevealOnScroll delayMs={100}>
+        <div className="flow-grid flow-grid--animate">
           <article className="flow-card">
             <div className="flow-card__icon flow-card__icon--balance" aria-hidden>
               ◎
@@ -286,6 +292,7 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
             </button>
           </article>
         </div>
+        </RevealOnScroll>
       )}
 
       {status && (

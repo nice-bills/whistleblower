@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAccount } from "wagmi";
 import AddressLink from "../components/AddressLink";
+import RevealOnScroll from "../components/RevealOnScroll";
 import StatusMessage from "../components/StatusMessage";
 import { useActiveChainId } from "../context/ViewChainContext";
 import { REGISTRY_ADDRESSES, chainLabel } from "../config";
@@ -56,6 +57,7 @@ export default function Registry() {
 
   return (
     <>
+      <RevealOnScroll>
       <section className="hero-split" aria-labelledby="hero-title">
         <div className="hero-split__copy">
           <p className="hero-split__tag">Confidential wrappers</p>
@@ -67,7 +69,7 @@ export default function Registry() {
             EIP-712, and unwrap on Sepolia or mainnet.
           </p>
           <div className="hero-split__actions">
-            <a href="#registry-panel" className="btn btn--primary">
+            <a href="#registry-panel" className="btn btn--primary btn--glow">
               Browse pairs
             </a>
             <Link to="/faucet" className="btn btn--ghost">
@@ -118,7 +120,9 @@ export default function Registry() {
           </div>
         </div>
       </section>
+      </RevealOnScroll>
 
+      <RevealOnScroll delayMs={80}>
       <section className="steps-strip" aria-label="How it works">
         <article className="step-card">
           <p className="step-card__num">01</p>
@@ -136,7 +140,9 @@ export default function Registry() {
           <p className="step-card__desc">Move back to public ERC-20 when you are ready.</p>
         </article>
       </section>
+      </RevealOnScroll>
 
+      <RevealOnScroll delayMs={120}>
       <section id="registry-panel" className="panel" aria-labelledby="registry-heading">
         <div className="panel__head">
           <div>
@@ -214,7 +220,10 @@ export default function Registry() {
 
         {!isLoading && !error && (
           <>
-            <div className="pair-grid">
+            <div
+              key={`${page}-${validOnly}-${query}`}
+              className={`pair-grid${!isLoading ? " pair-grid--animate" : ""}`}
+            >
               {items.length === 0 && (
                 <p className="empty-state">No pairs match this page or filter.</p>
               )}
@@ -290,6 +299,7 @@ export default function Registry() {
           </>
         )}
       </section>
+      </RevealOnScroll>
     </>
   );
 }

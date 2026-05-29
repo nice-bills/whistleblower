@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useAccount, useWriteContract } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import AddressLink from "../components/AddressLink";
+import RevealOnScroll from "../components/RevealOnScroll";
 import StatusMessage from "../components/StatusMessage";
 import TxLink from "../components/TxLink";
 import {
@@ -52,6 +53,7 @@ export default function Faucet() {
 
   return (
     <>
+      <RevealOnScroll>
       <header className="page-hero">
         <p className="page-hero__tag">Sepolia testnet</p>
         <h1 className="page-hero__title">Mock token faucet</h1>
@@ -60,7 +62,9 @@ export default function Faucet() {
           per token, up to 10,000 units each.
         </p>
       </header>
+      </RevealOnScroll>
 
+      <RevealOnScroll delayMs={100}>
       <section className="panel">
         <div className="panel__head">
           <div>
@@ -76,7 +80,7 @@ export default function Faucet() {
           <StatusMessage variant="warn">Switch to Sepolia. Mock mint is only available on testnet.</StatusMessage>
         )}
 
-        <div className="faucet-grid">
+        <div className="faucet-grid faucet-grid--animate">
           {SEPOLIA_MOCK_FAUCET_TOKENS.map((token, index) => (
             <article
               key={token.underlying}
@@ -114,6 +118,7 @@ export default function Faucet() {
         )}
         {status?.variant === "error" && <StatusMessage variant="error">{status.message}</StatusMessage>}
       </section>
+      </RevealOnScroll>
 
       <p style={{ marginTop: "1.5rem" }}>
         <Link to="/" className="page-back">

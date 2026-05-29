@@ -1,4 +1,5 @@
 import { Route, Routes } from "react-router-dom";
+import AmbientBackground from "./components/AmbientBackground";
 import DemoAutoConnect from "./components/DemoAutoConnect";
 import SiteHeader from "./components/SiteHeader";
 import Faucet from "./pages/Faucet";
@@ -8,6 +9,7 @@ import Registry from "./pages/Registry";
 export default function App() {
   return (
     <div className="app-shell">
+      <AmbientBackground />
       <DemoAutoConnect />
       <SiteHeader />
       <main className="app-main">
