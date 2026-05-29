@@ -14,6 +14,7 @@ import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useAccount, useReadContract } from "wagmi";
 import AddressLink from "../components/AddressLink";
+import CopyButton from "../components/CopyButton";
 import StatusMessage from "../components/StatusMessage";
 import TxLink from "../components/TxLink";
 import { useActiveChainId } from "../context/ViewChainContext";
@@ -94,6 +95,11 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
 
   const valid = pairFromNav?.isValid ?? isValid;
 
+  const publicFormatted =
+    publicBalance !== undefined ? formatUnits(publicBalance as bigint, decimals) : null;
+  const confidentialFormatted =
+    isAllowed && confidentialBalance !== undefined ? formatUnits(confidentialBalance, decimals) : null;
+
   async function handleAuthorizeDecrypt() {
     setStatus(null);
     try {
@@ -143,8 +149,16 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
     }
   }
 
+  function setMaxWrap() {
+    if (publicFormatted !== null) setWrapAmount(publicFormatted);
+  }
+
+  function setMaxUnwrap() {
+    if (confidentialFormatted !== null) setUnwrapAmount(confidentialFormatted);
+  }
+
   return (
-    <>
+    <div className="page-enter">
       <Link to="/" className="page-back">
         ← Registry
       </Link>
@@ -174,13 +188,19 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
         <div className="stat-cell">
           <span className="stat-cell__label">Underlying ERC-20</span>
           <span className="stat-cell__value">
-            <AddressLink chainId={activeChainId} address={underlying} />
+            <div className="address-row">
+              <AddressLink chainId={activeChainId} address={underlying} />
+              <CopyButton text={underlying} />
+            </div>
           </span>
         </div>
         <div className="stat-cell">
           <span className="stat-cell__label">Confidential wrapper</span>
           <span className="stat-cell__value">
-            <AddressLink chainId={activeChainId} address={confidential} />
+            <div className="address-row">
+              <AddressLink chainId={activeChainId} address={confidential} />
+              <CopyButton text={confidential} />
+            </div>
           </span>
         </div>
       </div>
@@ -190,95 +210,119 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
       )}
 
       {isConnected && (
-        <div className="flow-grid">
-          <article className="flow-card">
-            <p className="flow-card__step">Step 1</p>
-            <h2 className="flow-card__title">Balances</h2>
-            <ul className="balance-list">
-              <li>
-                <span className="balance-list__label">Public {underlyingMeta?.symbol}</span>
-                <span className="balance-list__value">
-                  {publicBalance !== undefined ? formatUnits(publicBalance as bigint, decimals) : "—"}
-                </span>
-              </li>
-              <li>
-                <span className="balance-list__label">Confidential {confidentialMeta?.symbol}</span>
-                <span className="balance-list__value">
-                  {!isAllowed
-                    ? "Sign to decrypt"
-                    : balanceLoading
-                      ? "…"
-                      : confidentialBalance !== undefined
-                        ? formatUnits(confidentialBalance, decimals)
-                        : "—"}
-                </span>
-              </li>
-            </ul>
-            <button
-              type="button"
-              className="btn btn--primary"
-              onClick={handleAuthorizeDecrypt}
-              disabled={allow.isPending}
-            >
-              {allow.isPending
-                ? "Signing EIP-712…"
-                : isAllowed
-                  ? "Re-authorize decrypt"
-                  : "Authorize decrypt"}
-            </button>
-          </article>
+        <>
+          <div className="flow-steps" aria-label="Workflow steps">
+            <span className={`flow-steps__item${!isAllowed ? " is-active" : ""}`}>1 · Authorize</span>
+            <span className={`flow-steps__item${isAllowed ? " is-active" : ""}`}>2 · Wrap</span>
+            <span className="flow-steps__item">3 · Unwrap</span>
+          </div>
 
-          <article className="flow-card">
-            <p className="flow-card__step">Step 2</p>
-            <h2 className="flow-card__title">Wrap (shield)</h2>
-            <label className="field-label" htmlFor="wrap-amount">
-              Amount · {underlyingMeta?.symbol ?? "tokens"}
-            </label>
-            <input
-              id="wrap-amount"
-              className="field-input"
-              type="text"
-              inputMode="decimal"
-              value={wrapAmount}
-              onChange={(e) => setWrapAmount(e.target.value)}
-              placeholder="100"
-            />
-            <button
-              type="button"
-              className="btn btn--primary"
-              onClick={handleWrap}
-              disabled={!valid || shield.isPending}
-            >
-              {shield.isPending ? "Wrapping…" : "Wrap to confidential"}
-            </button>
-          </article>
+          <div className="flow-grid">
+            <article className="flow-card">
+              <p className="flow-card__step">Step 1</p>
+              <h2 className="flow-card__title">Balances</h2>
+              <ul className="balance-list">
+                <li>
+                  <span className="balance-list__label">Public {underlyingMeta?.symbol}</span>
+                  <span className="balance-list__value">{publicFormatted ?? "—"}</span>
+                </li>
+                <li>
+                  <span className="balance-list__label">Confidential {confidentialMeta?.symbol}</span>
+                  <span className="balance-list__value">
+                    {!isAllowed
+                      ? "Sign to decrypt"
+                      : balanceLoading
+                        ? "…"
+                        : confidentialFormatted ?? "—"}
+                  </span>
+                </li>
+              </ul>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={handleAuthorizeDecrypt}
+                disabled={allow.isPending}
+              >
+                {allow.isPending
+                  ? "Signing EIP-712…"
+                  : isAllowed
+                    ? "Re-authorize decrypt"
+                    : "Authorize decrypt"}
+              </button>
+            </article>
 
-          <article className="flow-card">
-            <p className="flow-card__step">Step 3</p>
-            <h2 className="flow-card__title">Unwrap (unshield)</h2>
-            <label className="field-label" htmlFor="unwrap-amount">
-              Amount
-            </label>
-            <input
-              id="unwrap-amount"
-              className="field-input"
-              type="text"
-              inputMode="decimal"
-              value={unwrapAmount}
-              onChange={(e) => setUnwrapAmount(e.target.value)}
-              placeholder="Leave empty for full balance"
-            />
-            <p className="field-hint">SDK runs unwrap request and finalize in one flow.</p>
-            <button
-              type="button"
-              className="btn btn--primary"
-              onClick={handleUnwrap}
-              disabled={!valid || unshield.isPending || unshieldAll.isPending}
-            >
-              {unshield.isPending || unshieldAll.isPending ? "Unshielding…" : "Unwrap to ERC-20"}
-            </button>
-          </article>
-        </div>
+            <article className="flow-card">
+              <p className="flow-card__step">Step 2</p>
+              <h2 className="flow-card__title">Wrap (shield)</h2>
+              <label className="field-label" htmlFor="wrap-amount">
+                Amount · {underlyingMeta?.symbol ?? "tokens"}
+              </label>
+              <div className="field-input-row">
+                <input
+                  id="wrap-amount"
+                  className="field-input"
+                  type="text"
+                  inputMode="decimal"
+                  value={wrapAmount}
+                  onChange={(e) => setWrapAmount(e.target.value)}
+                  placeholder="100"
+                />
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={setMaxWrap}
+                  disabled={publicFormatted === null}
+                >
+                  Max
+                </button>
+              </div>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={handleWrap}
+                disabled={!valid || shield.isPending}
+              >
+                {shield.isPending ? "Wrapping…" : "Wrap to confidential"}
+              </button>
+            </article>
+
+            <article className="flow-card">
+              <p className="flow-card__step">Step 3</p>
+              <h2 className="flow-card__title">Unwrap (unshield)</h2>
+              <label className="field-label" htmlFor="unwrap-amount">
+                Amount
+              </label>
+              <div className="field-input-row">
+                <input
+                  id="unwrap-amount"
+                  className="field-input"
+                  type="text"
+                  inputMode="decimal"
+                  value={unwrapAmount}
+                  onChange={(e) => setUnwrapAmount(e.target.value)}
+                  placeholder="Leave empty for full balance"
+                />
+                <button
+                  type="button"
+                  className="btn btn--ghost btn--sm"
+                  onClick={setMaxUnwrap}
+                  disabled={confidentialFormatted === null}
+                >
+                  Max
+                </button>
+              </div>
+              <p className="field-hint">Leave empty to unshield your full confidential balance.</p>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={handleUnwrap}
+                disabled={!valid || unshield.isPending || unshieldAll.isPending}
+              >
+                {unshield.isPending || unshieldAll.isPending ? "Unshielding…" : "Unwrap to ERC-20"}
+              </button>
+            </article>
+          </div>
+        </>
       )}
 
       {status && (
@@ -292,6 +336,6 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
           )}
         </StatusMessage>
       )}
-    </>
+    </div>
   );
 }

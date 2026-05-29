@@ -1,8 +1,10 @@
 import { useListPairs, useTokenPairsLength, useWrappersRegistryAddress } from "@zama-fhe/react-sdk";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAccount } from "wagmi";
 import AddressLink from "../components/AddressLink";
+import CopyButton from "../components/CopyButton";
+import RegistrySkeleton from "../components/RegistrySkeleton";
 import StatusMessage from "../components/StatusMessage";
 import { useActiveChainId } from "../context/ViewChainContext";
 import { REGISTRY_ADDRESSES, chainLabel } from "../config";
@@ -10,6 +12,7 @@ import { REGISTRY_ADDRESSES, chainLabel } from "../config";
 const PAGE_SIZE = 50;
 
 export default function Registry() {
+  const navigate = useNavigate();
   const { chainId, isConnected } = useAccount();
   const [page, setPage] = useState(1);
   const [validOnly, setValidOnly] = useState(true);
@@ -51,16 +54,30 @@ export default function Registry() {
   }, [data?.items, validOnly, query]);
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
+  const hasFilter = query.trim().length > 0;
 
   return (
-    <>
+    <div className="page-enter">
       <header className="page-hero">
         <p className="page-hero__eyebrow">On-chain directory</p>
-        <h1 className="page-hero__title">Every official confidential wrapper pair.</h1>
+        <h1 className="page-hero__title">Confidential wrapper pairs</h1>
         <p className="page-hero__lede">
-          Browse ERC-20 ↔ ERC-7984 mappings from the Zama registry. Wrap, decrypt balances with
-          EIP-712, and unwrap on Sepolia or mainnet.
+          Browse ERC-20 to ERC-7984 mappings from the Zama registry. Wrap tokens, decrypt balances
+          with EIP-712, and unwrap on Sepolia or mainnet.
         </p>
+        <div className="hero-actions">
+          <Link to="/faucet" className="btn btn--primary">
+            Get test tokens
+          </Link>
+          <a
+            href="https://docs.zama.org/protocol/protocol-apps/confidential-tokens/wrapper-registry"
+            className="btn btn--ghost"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Read docs
+          </a>
+        </div>
       </header>
 
       <section className="panel" aria-labelledby="registry-heading">
@@ -91,7 +108,10 @@ export default function Registry() {
             <span className="stat-cell__label">Registry</span>
             <span className="stat-cell__value">
               {registryAddress ? (
-                <AddressLink chainId={activeChainId} address={registryAddress} />
+                <div className="address-row">
+                  <AddressLink chainId={activeChainId} address={registryAddress} />
+                  <CopyButton text={registryAddress} />
+                </div>
               ) : (
                 "…"
               )}
@@ -111,7 +131,18 @@ export default function Registry() {
               placeholder="Filter by symbol or address…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              aria-describedby={hasFilter ? "filter-count" : undefined}
             />
+            {hasFilter && (
+              <button
+                type="button"
+                className="search-field__clear"
+                onClick={() => setQuery("")}
+                aria-label="Clear search"
+              >
+                Clear
+              </button>
+            )}
           </label>
           <label className="checkbox-label">
             <input
@@ -127,9 +158,14 @@ export default function Registry() {
           <button type="button" className="btn btn--ghost btn--sm" onClick={() => refetch()} disabled={isFetching}>
             {isFetching ? "Refreshing…" : "Refresh"}
           </button>
+          {!isLoading && !error && (
+            <span id="filter-count" className="toolbar__meta">
+              {items.length} shown on this page
+            </span>
+          )}
         </div>
 
-        {isLoading && <p className="loading-block">Loading pairs</p>}
+        {isLoading && <RegistrySkeleton />}
         {error && <StatusMessage variant="error">{error.message}</StatusMessage>}
 
         {!isLoading && !error && (
@@ -150,7 +186,26 @@ export default function Registry() {
                   {items.length === 0 && (
                     <tr>
                       <td colSpan={4}>
-                        <p className="empty-state">No pairs match this page or filter.</p>
+                        <div className="empty-state">
+                          <p className="empty-state__title">No pairs match your filters</p>
+                          <p className="empty-state__hint">
+                            {hasFilter
+                              ? "Try a different symbol or address, or clear the search."
+                              : "Try another page or turn off “Valid only”."}
+                          </p>
+                          {(hasFilter || validOnly) && (
+                            <button
+                              type="button"
+                              className="btn btn--ghost btn--sm"
+                              onClick={() => {
+                                setQuery("");
+                                setValidOnly(false);
+                              }}
+                            >
+                              Reset filters
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )}
@@ -162,8 +217,20 @@ export default function Registry() {
                             confidential: { symbol: string; name: string };
                           })
                         : null;
+                    const pairPath = `/pair/${pair.confidentialTokenAddress}`;
                     return (
-                      <tr key={`${pair.tokenAddress}-${pair.confidentialTokenAddress}`}>
+                      <tr
+                        key={`${pair.tokenAddress}-${pair.confidentialTokenAddress}`}
+                        className="data-table__row"
+                        tabIndex={0}
+                        onClick={() => navigate(pairPath, { state: { pair } })}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            navigate(pairPath, { state: { pair } });
+                          }
+                        }}
+                      >
                         <td>
                           <span className={pair.isValid ? "badge badge--valid" : "badge badge--revoked"}>
                             {pair.isValid ? "Valid" : "Revoked"}
@@ -173,7 +240,10 @@ export default function Registry() {
                           <div className="token-stack">
                             <span className="token-stack__symbol">{meta?.underlying.symbol ?? "ERC-20"}</span>
                             <span className="token-stack__name">{meta?.underlying.name}</span>
-                            <AddressLink chainId={activeChainId} address={pair.tokenAddress} />
+                            <div className="address-row" onClick={(e) => e.stopPropagation()}>
+                              <AddressLink chainId={activeChainId} address={pair.tokenAddress} />
+                              <CopyButton text={pair.tokenAddress} />
+                            </div>
                           </div>
                         </td>
                         <td>
@@ -182,15 +252,14 @@ export default function Registry() {
                               {meta?.confidential.symbol ?? "ERC-7984"}
                             </span>
                             <span className="token-stack__name">{meta?.confidential.name}</span>
-                            <AddressLink chainId={activeChainId} address={pair.confidentialTokenAddress} />
+                            <div className="address-row" onClick={(e) => e.stopPropagation()}>
+                              <AddressLink chainId={activeChainId} address={pair.confidentialTokenAddress} />
+                              <CopyButton text={pair.confidentialTokenAddress} />
+                            </div>
                           </div>
                         </td>
-                        <td>
-                          <Link
-                            className="btn btn--primary btn--sm"
-                            to={`/pair/${pair.confidentialTokenAddress}`}
-                            state={{ pair }}
-                          >
+                        <td onClick={(e) => e.stopPropagation()}>
+                          <Link className="btn btn--primary btn--sm" to={pairPath} state={{ pair }}>
                             Open pair
                           </Link>
                         </td>
@@ -225,6 +294,6 @@ export default function Registry() {
           </>
         )}
       </section>
-    </>
+    </div>
   );
 }

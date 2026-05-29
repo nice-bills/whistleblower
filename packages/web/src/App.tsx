@@ -10,7 +10,7 @@ export default function App() {
     <div className="app-shell">
       <DemoAutoConnect />
       <SiteHeader />
-      <main className="app-main">
+      <main id="main-content" className="app-main">
         <Routes>
           <Route path="/" element={<Registry />} />
           <Route path="/pair/:confidentialAddress" element={<PairDetail />} />

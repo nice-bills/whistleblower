@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useAccount, useWriteContract } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import AddressLink from "../components/AddressLink";
+import CopyButton from "../components/CopyButton";
 import StatusMessage from "../components/StatusMessage";
 import TxLink from "../components/TxLink";
 import {
@@ -21,11 +22,13 @@ export default function Faucet() {
   const { address, chainId, isConnected } = useAccount();
   const { writeContractAsync, isPending } = useWriteContract();
   const [status, setStatus] = useState<StatusState>(null);
+  const [mintingSymbol, setMintingSymbol] = useState<string | null>(null);
   const onSepolia = chainId === sepolia.id;
 
   async function mintToken(token: (typeof SEPOLIA_MOCK_FAUCET_TOKENS)[number]) {
     if (!address) return;
     setStatus(null);
+    setMintingSymbol(token.symbol);
     try {
       const amount = parseUnits(DEFAULT_FAUCET_MINT_UNITS.toString(), token.decimals);
       const hash = await writeContractAsync({
@@ -45,18 +48,25 @@ export default function Faucet() {
         variant: "error",
         message: e instanceof Error ? e.message : "Mint failed.",
       });
+    } finally {
+      setMintingSymbol(null);
     }
   }
 
   return (
-    <>
+    <div className="page-enter">
       <header className="page-hero">
         <p className="page-hero__eyebrow">Sepolia testnet</p>
-        <h1 className="page-hero__title">Mock token faucet.</h1>
+        <h1 className="page-hero__title">Mock token faucet</h1>
         <p className="page-hero__lede">
           Mint official cTokenMock underlyings, then wrap them through any registry pair. One click
-          per token — up to 10,000 units each.
+          per token, up to {DEFAULT_FAUCET_MINT_UNITS.toLocaleString()} units each.
         </p>
+        <div className="hero-actions">
+          <Link to="/" className="btn btn--ghost">
+            ← Back to registry
+          </Link>
+        </div>
       </header>
 
       <section className="panel">
@@ -71,32 +81,45 @@ export default function Faucet() {
           <StatusMessage variant="info">Connect a wallet in the header to mint test tokens.</StatusMessage>
         )}
         {isConnected && !onSepolia && (
-          <StatusMessage variant="warn">Switch to Sepolia — mock mint is only available on testnet.</StatusMessage>
+          <StatusMessage variant="warn">Switch to Sepolia. Mock mint is only available on testnet.</StatusMessage>
         )}
 
         <div className="faucet-grid">
-          {SEPOLIA_MOCK_FAUCET_TOKENS.map((token) => (
-            <article key={token.underlying} className="faucet-card">
-              <h3 className="faucet-card__name">{token.name}</h3>
-              <p className="faucet-card__meta">
-                Underlying · <AddressLink chainId={sepolia.id} address={token.underlying} />
-              </p>
-              <p className="faucet-card__meta">
-                Wrapper ·{" "}
-                <Link to={`/pair/${token.confidential}`} className="mono-link">
-                  {token.confidential.slice(0, 10)}…
-                </Link>
-              </p>
-              <button
-                type="button"
-                className="btn btn--primary"
-                disabled={!isConnected || !onSepolia || isPending}
-                onClick={() => mintToken(token)}
-              >
-                Mint {DEFAULT_FAUCET_MINT_UNITS.toLocaleString()} {token.symbol}
-              </button>
-            </article>
-          ))}
+          {SEPOLIA_MOCK_FAUCET_TOKENS.map((token) => {
+            const isMinting = mintingSymbol === token.symbol && isPending;
+            return (
+              <article key={token.underlying} className="faucet-card">
+                <span className="faucet-card__symbol">{token.symbol}</span>
+                <h3 className="faucet-card__name">{token.name}</h3>
+                <p className="faucet-card__meta">
+                  Underlying ·{" "}
+                  <span className="address-row">
+                    <AddressLink chainId={sepolia.id} address={token.underlying} />
+                    <CopyButton text={token.underlying} />
+                  </span>
+                </p>
+                <p className="faucet-card__meta">
+                  Wrapper ·{" "}
+                  <span className="address-row">
+                    <Link to={`/pair/${token.confidential}`} className="mono-link">
+                      {token.confidential.slice(0, 10)}…
+                    </Link>
+                    <CopyButton text={token.confidential} />
+                  </span>
+                </p>
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  disabled={!isConnected || !onSepolia || isPending}
+                  onClick={() => mintToken(token)}
+                >
+                  {isMinting
+                    ? "Minting…"
+                    : `Mint ${DEFAULT_FAUCET_MINT_UNITS.toLocaleString()} ${token.symbol}`}
+                </button>
+              </article>
+            );
+          })}
         </div>
 
         {status?.variant === "success" && (
@@ -107,12 +130,6 @@ export default function Faucet() {
         )}
         {status?.variant === "error" && <StatusMessage variant="error">{status.message}</StatusMessage>}
       </section>
-
-      <p style={{ marginTop: "1.5rem" }}>
-        <Link to="/" className="page-back">
-          ← Back to registry
-        </Link>
-      </p>
-    </>
+    </div>
   );
 }

@@ -74,6 +74,11 @@ export default function ConnectWallet() {
 
   return (
     <div className="wallet-bar">
+      <span
+        className={`wallet-status${onSupported ? "" : " wallet-status--warn"}`}
+        title={onSupported ? "Connected on supported network" : "Unsupported network"}
+        aria-hidden
+      />
       <span className="wallet-address" title={address}>
         {short}
       </span>
