@@ -1,20 +1,22 @@
 import { Route, Routes } from "react-router-dom";
 import DemoAutoConnect from "./components/DemoAutoConnect";
+import PillNavbar from "./components/PillNavbar";
 import Faucet from "./pages/Faucet";
 import PairDetail from "./pages/PairDetail";
 import Registry from "./pages/Registry";
 
 export default function App() {
   return (
-    <div className="min-h-full bg-black text-white antialiased">
+    <div className="min-h-full overflow-x-hidden bg-black text-white antialiased">
       <DemoAutoConnect />
+      <PillNavbar />
       <Routes>
         <Route path="/" element={<Registry />} />
         <Route path="/pair/:confidentialAddress" element={<PairDetail />} />
         <Route path="/faucet" element={<Faucet />} />
       </Routes>
-      <footer className="border-t border-white/10 px-6 py-8 text-sm text-white/50 md:px-10">
-        <div className="mx-auto flex max-w-6xl flex-wrap gap-4">
+      <footer className="border-t border-white/10 px-5 py-8 text-sm text-white/50 md:px-10">
+        <div className="mx-auto flex max-w-7xl flex-wrap gap-x-6 gap-y-2">
           <span>
             season 3 ·{" "}
             <a

@@ -7,14 +7,19 @@ function ChainPills({
   activeId,
   onSelect,
   disabled,
+  compact,
 }: {
   activeId: SupportedChainId;
   onSelect: (id: SupportedChainId) => void;
   disabled?: boolean;
+  compact?: boolean;
 }) {
   return (
     <div
-      className="hidden items-center gap-0.5 rounded-full bg-neutral-800/80 p-0.5 sm:flex"
+      className={[
+        "items-center gap-0.5 rounded-full bg-black/40 p-0.5",
+        compact ? "hidden lg:flex" : "hidden sm:flex",
+      ].join(" ")}
       role="group"
       aria-label="Network"
     >
@@ -25,7 +30,7 @@ function ChainPills({
           disabled={disabled}
           onClick={() => onSelect(chain.id)}
           className={[
-            "rounded-full px-2.5 py-1 text-xs transition-colors",
+            "rounded-full px-2 py-1 text-[11px] transition-colors md:px-2.5 md:text-xs",
             activeId === chain.id ? "bg-white text-black" : "text-neutral-300 hover:text-white",
           ].join(" ")}
         >
@@ -36,7 +41,7 @@ function ChainPills({
   );
 }
 
-export default function ConnectWallet() {
+export default function ConnectWallet({ compact = false }: { compact?: boolean }) {
   const { address, chainId, isConnected } = useAccount();
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
@@ -54,18 +59,27 @@ export default function ConnectWallet() {
     }
   }
 
+  const connectBtnClass = compact
+    ? "shrink-0 rounded-full bg-white px-4 py-2 text-xs font-normal text-black transition-colors hover:bg-neutral-200 disabled:opacity-50 md:px-5 md:py-2.5 md:text-sm"
+    : "rounded-full bg-white px-6 py-3 text-sm font-normal text-black transition-colors hover:bg-neutral-200 disabled:opacity-50";
+
   if (!isConnected) {
     const connector = connectors[0];
     return (
-      <div className="flex items-center gap-2">
-        <ChainPills activeId={walletChainId} onSelect={selectChain} disabled={isSwitching} />
+      <div className="flex max-w-full items-center justify-end gap-1.5 md:gap-2">
+        <ChainPills
+          activeId={walletChainId}
+          onSelect={selectChain}
+          disabled={isSwitching}
+          compact={compact}
+        />
         <button
           type="button"
-          className="rounded-full bg-white px-6 py-3 text-sm font-normal text-black transition-colors hover:bg-neutral-200 disabled:opacity-50"
+          className={connectBtnClass}
           disabled={!connector || isPending}
           onClick={() => connector && connect({ connector })}
         >
-          {isPending ? "connecting…" : "connect wallet"}
+          {isPending ? "…" : compact ? "connect" : "connect wallet"}
         </button>
       </div>
     );
@@ -73,6 +87,26 @@ export default function ConnectWallet() {
 
   const short = `${address!.slice(0, 6)}…${address!.slice(-4)}`;
   const onSupported = chainId !== undefined && isSupportedChainId(chainId);
+
+  if (compact) {
+    return (
+      <div className="flex max-w-full items-center justify-end gap-1.5">
+        <span
+          className="max-w-[100px] truncate rounded-full bg-black/40 px-3 py-2 font-mono text-[11px] text-white/90 md:max-w-none md:text-xs"
+          title={address}
+        >
+          {short}
+        </span>
+        <button
+          type="button"
+          className="rounded-full border border-white/15 px-3 py-2 text-[11px] text-neutral-300 hover:text-white"
+          onClick={() => disconnect()}
+        >
+          out
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-2">

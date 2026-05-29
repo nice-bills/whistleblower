@@ -25,10 +25,9 @@ type StatusState =
   | null;
 
 const inputClass =
-  "w-full rounded-xl border border-white/10 bg-neutral-950 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none";
+  "w-full rounded-xl border border-white/10 bg-black/50 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-white/25 focus:outline-none focus:ring-2 focus:ring-white/10";
 
-const cardClass =
-  "flex flex-col gap-4 rounded-2xl border border-white/10 bg-neutral-900/90 p-5 backdrop-blur";
+const cardClass = "pill-surface flex flex-col gap-4 rounded-2xl p-5";
 
 const btnPrimary =
   "rounded-full bg-white py-2.5 text-sm text-black transition-colors hover:bg-neutral-200 disabled:opacity-40";
@@ -182,10 +181,10 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
         >
           {valid ? "valid" : "revoked"}
         </span>
-        <div className="rounded-2xl border border-white/10 bg-neutral-900/90 px-4 py-2 text-xs backdrop-blur">
+        <div className="pill-surface rounded-2xl px-4 py-2 text-xs">
           underlying <AddressLink chainId={activeChainId} address={underlying} />
         </div>
-        <div className="rounded-2xl border border-white/10 bg-neutral-900/90 px-4 py-2 text-xs backdrop-blur">
+        <div className="pill-surface rounded-2xl px-4 py-2 text-xs">
           confidential <AddressLink chainId={activeChainId} address={confidential} />
         </div>
       </div>

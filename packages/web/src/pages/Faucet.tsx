@@ -65,7 +65,7 @@ export default function Faucet() {
         {SEPOLIA_MOCK_FAUCET_TOKENS.map((token) => (
           <article
             key={token.underlying}
-            className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-neutral-900/90 p-5 backdrop-blur"
+            className="pill-surface flex flex-col gap-3 rounded-2xl p-5"
           >
             <p className="text-2xl font-medium lowercase text-white">{token.symbol}</p>
             <p className="text-sm text-white/60">{token.name}</p>
