@@ -4,7 +4,7 @@ import RegistryLogo from "./RegistryLogo";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
-    "rounded-full px-4 py-2 text-sm transition-colors md:px-5",
+    "rounded-full px-3 py-2 text-sm transition-colors md:px-4",
     isActive ? "bg-white/10 text-white" : "text-neutral-300 hover:bg-white/5 hover:text-white",
   ].join(" ");
 
@@ -25,10 +25,16 @@ export default function PillNavbar() {
           </span>
         </NavLink>
 
-        <div className="col-span-2 flex justify-center md:col-span-1 md:col-start-2">
+        <div className="col-span-2 flex justify-center overflow-x-auto md:col-span-1 md:col-start-2">
           <div className="flex items-center gap-0.5 rounded-full bg-black/30 p-0.5">
             <NavLink to="/" end className={navLinkClass}>
               registry
+            </NavLink>
+            <NavLink to="/portfolio" className={navLinkClass}>
+              portfolio
+            </NavLink>
+            <NavLink to="/start" className={navLinkClass}>
+              start
             </NavLink>
             <NavLink to="/faucet" className={navLinkClass}>
               faucet

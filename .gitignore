@@ -14,3 +14,5 @@ packages/contracts/coverage
 packages/contracts/types
 packages/contracts/deployments
 packages/web/dist
+test-results
+playwright-report

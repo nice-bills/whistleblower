@@ -6,10 +6,10 @@ Production-oriented explorer for the [official Zama Confidential Token Wrappers 
 
 | Requirement | Implementation |
 |-------------|----------------|
-| Surface ERC-20 ↔ ERC-7984 pairs (Sepolia + mainnet) | Paginated registry table via `@zama-fhe/react-sdk` `useListPairs` + on-chain pair count |
-| Wrap / unwrap any valid pair | Per-pair page: `useShield` (wrap) and `useUnshield` / `useUnshieldAll` (unwrap) |
-| Decrypt ERC-7984 balance (EIP-712) | `useAllow` + `useConfidentialBalance` user-decryption flow |
-| Sepolia faucet for cTokenMocks | Mint official mock underlying ERC-20s (public `mint`, 10k units per click) |
+| Surface ERC-20 ↔ ERC-7984 pairs (Sepolia + mainnet) | Full registry index, global search, cross-network coverage stats, JSON export |
+| Wrap / unwrap any valid pair | Pair page with approval UX, max amounts, mainnet confirm, resume unshield |
+| Decrypt ERC-7984 balance (EIP-712) | Per-pair decrypt + portfolio batch authorization |
+| Sepolia faucet for cTokenMocks | Mint mocks + guided **Getting started** flow (`/start`) |
 
 The whistleblower Hardhat package remains in `packages/contracts` as an earlier Builder Track experiment; the active submission target is this registry web app.
 
@@ -31,11 +31,20 @@ pnpm dev
 
 Open the Vite URL (default `http://localhost:5173`). Connect a wallet on **Sepolia** or **Ethereum mainnet**.
 
-Optional RPC overrides in `packages/web/.env`:
+**Routes:** `/` registry · `/start` guided demo · `/portfolio` holdings · `/faucet` Sepolia mocks · `/pair/:address` actions
+
+Optional env in `packages/web/.env` (see `.env.example`):
 
 ```bash
 VITE_SEPOLIA_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
 VITE_MAINNET_RPC_URL=https://ethereum-rpc.publicnode.com
+# VITE_WALLETCONNECT_PROJECT_ID=...
+```
+
+```bash
+pnpm build:web
+pnpm test:e2e:install   # first time only
+pnpm test:e2e
 ```
 
 ## Deployed registry addresses

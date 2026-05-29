@@ -1,6 +1,8 @@
 import { parseUnits } from "viem";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { formatTxError } from "../lib/errors";
+import { pushTxActivity } from "../lib/storage";
 import { useAccount, useWriteContract } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import AddressLink from "../components/AddressLink";
@@ -36,6 +38,7 @@ export default function Faucet() {
         functionName: "mint",
         args: [address, amount],
       });
+      pushTxActivity({ chainId: sepolia.id, hash, label: `mint ${token.symbol}`, at: Date.now() });
       setStatus({
         variant: "success",
         message: `minted ${DEFAULT_FAUCET_MINT_UNITS.toLocaleString()} ${token.symbol} underlying.`,
@@ -44,7 +47,7 @@ export default function Faucet() {
     } catch (e) {
       setStatus({
         variant: "error",
-        message: e instanceof Error ? e.message : "mint failed.",
+        message: formatTxError(e),
       });
     }
   }
@@ -81,14 +84,22 @@ export default function Faucet() {
                 {token.confidential.slice(0, 10)}…
               </Link>
             </p>
-            <button
-              type="button"
-              className="mt-auto rounded-full bg-white py-2.5 text-sm text-black transition-colors hover:bg-neutral-200 disabled:opacity-40"
-              disabled={!isConnected || !onSepolia || isPending}
-              onClick={() => mintToken(token)}
-            >
-              mint {DEFAULT_FAUCET_MINT_UNITS.toLocaleString()} {token.symbol}
-            </button>
+            <div className="mt-auto flex flex-col gap-2">
+              <button
+                type="button"
+                className="rounded-full bg-white py-2.5 text-sm text-black transition-colors hover:bg-neutral-200 disabled:opacity-40"
+                disabled={!isConnected || !onSepolia || isPending}
+                onClick={() => mintToken(token)}
+              >
+                mint {DEFAULT_FAUCET_MINT_UNITS.toLocaleString()} {token.symbol}
+              </button>
+              <Link
+                to={`/start?token=${token.underlying}`}
+                className="rounded-full border border-white/20 py-2 text-center text-xs text-white/70 hover:text-white"
+              >
+                mint & guided wrap →
+              </Link>
+            </div>
           </article>
         ))}
       </div>

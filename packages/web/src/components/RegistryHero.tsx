@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { HERO_VIDEO_SRC } from "../constants/hero-video";
 
 type Props = {
@@ -95,13 +96,19 @@ export default function RegistryHero({ pairCount, networkLabel }: Props) {
           <StatBlock value="eip-712" label="decrypt" align="right" />
         </div>
 
-        <div className="mt-auto flex flex-col gap-4 pt-10 md:pt-8">
+        <div className="mt-auto flex flex-col gap-3 pt-10 sm:flex-row sm:items-center md:pt-8">
           <a
             href="#registry-panel"
             className="inline-flex w-fit items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-normal text-black transition-colors hover:bg-neutral-200"
           >
             browse pairs
           </a>
+          <Link
+            to="/start"
+            className="inline-flex w-fit items-center justify-center rounded-full border border-white/25 px-7 py-3.5 text-sm text-white transition-colors hover:bg-white/10"
+          >
+            guided demo
+          </Link>
         </div>
       </div>
 

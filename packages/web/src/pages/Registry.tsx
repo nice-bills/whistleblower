@@ -1,57 +1,50 @@
-import { useListPairs, useTokenPairsLength, useWrappersRegistryAddress } from "@zama-fhe/react-sdk";
+import { useTokenPairsLength, useWrappersRegistryAddress } from "@zama-fhe/react-sdk";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAccount } from "wagmi";
 import AddressLink from "../components/AddressLink";
+import ExportPairsButton from "../components/ExportPairsButton";
+import NetworkCompare from "../components/NetworkCompare";
+import PairCard from "../components/PairCard";
+import RecentPairs from "../components/RecentPairs";
 import RegistryHero from "../components/RegistryHero";
+import RegistryStats from "../components/RegistryStats";
 import StatusMessage from "../components/StatusMessage";
 import { useActiveChainId } from "../context/ViewChainContext";
+import { useAllRegistryPairs } from "../hooks/useAllRegistryPairs";
 import { REGISTRY_ADDRESSES, chainLabel } from "../config";
+import { filterPairs, sortPairs } from "../lib/pairSearch";
+import { loadFavoritePairs } from "../lib/storage";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 24;
 
 export default function Registry() {
   const { chainId, isConnected } = useAccount();
   const [page, setPage] = useState(1);
   const [validOnly, setValidOnly] = useState(true);
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<"symbol" | "valid-first" | "favorites">("symbol");
 
   const activeChainId = useActiveChainId(chainId, isConnected);
-
   const registryAddress = useWrappersRegistryAddress();
   const { data: totalPairs } = useTokenPairsLength();
-  const { data, isLoading, error, refetch, isFetching } = useListPairs({
-    page,
-    pageSize: PAGE_SIZE,
-    metadata: true,
-  });
+  const {
+    data: allPairs,
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+  } = useAllRegistryPairs();
 
-  const items = useMemo(() => {
-    let list = data?.items ?? [];
-    if (validOnly) list = list.filter((p) => p.isValid);
-    const q = query.trim().toLowerCase();
-    if (!q) return list;
-    return list.filter((pair) => {
-      if (!("underlying" in pair)) return false;
-      const p = pair as {
-        underlying: { symbol: string; name: string };
-        confidential: { symbol: string; name: string };
-      };
-      const hay = [
-        p.underlying.symbol,
-        p.underlying.name,
-        p.confidential.symbol,
-        p.confidential.name,
-        pair.tokenAddress,
-        pair.confidentialTokenAddress,
-      ]
-        .join(" ")
-        .toLowerCase();
-      return hay.includes(q);
-    });
-  }, [data?.items, validOnly, query]);
+  const favorites = useMemo(() => loadFavoritePairs(), [allPairs]);
 
-  const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
+  const filtered = useMemo(() => {
+    const list = filterPairs(allPairs ?? [], query, validOnly);
+    return sortPairs(list, sort, favorites);
+  }, [allPairs, query, validOnly, sort, favorites]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <>
@@ -71,19 +64,28 @@ export default function Registry() {
                 all pairs
               </h2>
               <p className="mt-1 text-sm text-white/60">
-                {totalPairs !== undefined
-                  ? `${totalPairs.toString()} on ${chainLabel(activeChainId).toLowerCase()}`
-                  : "loading…"}
+                global search across the full registry · {chainLabel(activeChainId).toLowerCase()}
               </p>
             </div>
+            <Link
+              to="/start"
+              className="rounded-full bg-white px-5 py-2.5 text-sm text-black hover:bg-neutral-200"
+            >
+              getting started →
+            </Link>
           </header>
+
+          <div className="mb-8 space-y-6">
+            <NetworkCompare />
+            <RegistryStats pairs={allPairs} isLoading={isLoading} />
+          </div>
 
           <div className="mb-8 grid gap-3 sm:grid-cols-2">
             <div className="pill-surface rounded-2xl px-4 py-3">
               <p className="text-xs uppercase tracking-wide text-white/50">network</p>
               <p className="mt-1 text-sm text-white">{chainLabel(activeChainId)}</p>
             </div>
-            <div className="pill-surface min-w-0 rounded-2xl px-4 py-3 sm:col-span-1">
+            <div className="pill-surface min-w-0 rounded-2xl px-4 py-3">
               <p className="text-xs uppercase tracking-wide text-white/50">registry</p>
               <p className="mt-1">
                 {registryAddress ? (
@@ -95,17 +97,32 @@ export default function Registry() {
             </div>
           </div>
 
+          {allPairs && <RecentPairs allPairs={allPairs} />}
+
           <div className="mb-8 flex flex-wrap items-center gap-3">
             <label className="min-w-[200px] flex-1">
-              <span className="sr-only">filter pairs</span>
+              <span className="sr-only">search entire registry</span>
               <input
                 type="search"
-                placeholder="search symbol or address…"
+                placeholder="search all pairs by symbol or address…"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setPage(1);
+                }}
                 className="pill-surface w-full max-w-md rounded-full px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:border-white/25 focus:outline-none focus:ring-2 focus:ring-white/10"
               />
             </label>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as typeof sort)}
+              className="pill-surface rounded-full px-4 py-2.5 text-sm text-white"
+              aria-label="sort pairs"
+            >
+              <option value="symbol">sort: symbol</option>
+              <option value="valid-first">sort: valid first</option>
+              <option value="favorites">sort: favorites</option>
+            </select>
             <label className="flex items-center gap-2 text-sm text-white/70">
               <input
                 type="checkbox"
@@ -126,70 +143,27 @@ export default function Registry() {
             >
               {isFetching ? "refreshing…" : "refresh"}
             </button>
+            {allPairs && <ExportPairsButton pairs={filtered} />}
           </div>
 
-          {isLoading && <p className="py-12 text-center text-white/50">loading pairs…</p>}
+          {isLoading && <p className="py-12 text-center text-white/50">loading full registry…</p>}
           {error && <StatusMessage variant="error">{error.message}</StatusMessage>}
 
           {!isLoading && !error && (
             <>
+              <p className="mb-4 text-sm text-white/50">
+                showing {pageItems.length} of {filtered.length} matches
+                {query ? ` for “${query}”` : ""}
+              </p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {items.length === 0 && (
+                {pageItems.length === 0 && (
                   <p className="col-span-full rounded-2xl border border-dashed border-white/15 py-16 text-center text-white/50">
                     no pairs match this filter
                   </p>
                 )}
-                {items.map((pair) => {
-                  const meta =
-                    "underlying" in pair
-                      ? (pair as {
-                          underlying: { symbol: string; name: string };
-                          confidential: { symbol: string; name: string };
-                        })
-                      : null;
-                  return (
-                    <article
-                      key={`${pair.tokenAddress}-${pair.confidentialTokenAddress}`}
-                      className="pill-surface flex flex-col gap-4 rounded-2xl p-5 transition-colors hover:border-white/20"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="text-lg font-medium lowercase text-white">
-                            {meta?.underlying.symbol ?? "erc-20"}
-                            <span className="text-white/50"> → </span>
-                            {meta?.confidential.symbol ?? "erc-7984"}
-                          </p>
-                          <p className="mt-1 text-xs text-white/50">
-                            {meta?.underlying.name}
-                            {meta?.underlying.name && meta?.confidential.name ? " · " : ""}
-                            {meta?.confidential.name}
-                          </p>
-                        </div>
-                        <span
-                          className={[
-                            "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                            pair.isValid
-                              ? "bg-white/15 text-white"
-                              : "bg-white/5 text-white/50 line-through",
-                          ].join(" ")}
-                        >
-                          {pair.isValid ? "valid" : "revoked"}
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <AddressLink chainId={activeChainId} address={pair.tokenAddress} />
-                        <AddressLink chainId={activeChainId} address={pair.confidentialTokenAddress} />
-                      </div>
-                      <Link
-                        to={`/pair/${pair.confidentialTokenAddress}`}
-                        state={{ pair }}
-                        className="mt-auto rounded-full bg-white py-2.5 text-center text-sm text-black transition-colors hover:bg-neutral-200"
-                      >
-                        open pair
-                      </Link>
-                    </article>
-                  );
-                })}
+                {pageItems.map((pair) => (
+                  <PairCard key={pair.confidentialTokenAddress} pair={pair} chainId={activeChainId} />
+                ))}
               </div>
 
               <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-6 text-sm text-white/60">
@@ -202,7 +176,7 @@ export default function Registry() {
                   previous
                 </button>
                 <span>
-                  page {page} of {totalPages} · {data?.total ?? 0} total
+                  page {page} of {totalPages}
                 </span>
                 <button
                   type="button"

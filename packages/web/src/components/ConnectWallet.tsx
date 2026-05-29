@@ -17,8 +17,8 @@ function ChainPills({
   return (
     <div
       className={[
-        "items-center gap-0.5 rounded-full bg-black/40 p-0.5",
-        compact ? "hidden lg:flex" : "hidden sm:flex",
+        "flex items-center gap-0.5 rounded-full bg-black/40 p-0.5",
+        compact ? "flex" : "hidden sm:flex",
       ].join(" ")}
       role="group"
       aria-label="Network"
@@ -64,7 +64,8 @@ export default function ConnectWallet({ compact = false }: { compact?: boolean }
     : "rounded-full bg-white px-6 py-3 text-sm font-normal text-black transition-colors hover:bg-neutral-200 disabled:opacity-50";
 
   if (!isConnected) {
-    const connector = connectors[0];
+    const injectedConnector = connectors.find((c) => c.id === "injected");
+    const wcConnector = connectors.find((c) => c.id === "walletConnect");
     return (
       <div className="flex max-w-full items-center justify-end gap-1.5 md:gap-2">
         <ChainPills
@@ -73,11 +74,21 @@ export default function ConnectWallet({ compact = false }: { compact?: boolean }
           disabled={isSwitching}
           compact={compact}
         />
+        {wcConnector && (
+          <button
+            type="button"
+            className="hidden rounded-full border border-white/20 px-3 py-2 text-[11px] text-white/80 hover:text-white sm:inline md:text-xs"
+            disabled={isPending}
+            onClick={() => connect({ connector: wcConnector })}
+          >
+            walletconnect
+          </button>
+        )}
         <button
           type="button"
           className={connectBtnClass}
-          disabled={!connector || isPending}
-          onClick={() => connector && connect({ connector })}
+          disabled={!injectedConnector || isPending}
+          onClick={() => injectedConnector && connect({ connector: injectedConnector })}
         >
           {isPending ? "…" : compact ? "connect" : "connect wallet"}
         </button>
@@ -91,6 +102,12 @@ export default function ConnectWallet({ compact = false }: { compact?: boolean }
   if (compact) {
     return (
       <div className="flex max-w-full items-center justify-end gap-1.5">
+        <ChainPills
+          activeId={walletChainId}
+          onSelect={selectChain}
+          disabled={isSwitching}
+          compact
+        />
         <span
           className="max-w-[100px] truncate rounded-full bg-black/40 px-3 py-2 font-mono text-[11px] text-white/90 md:max-w-none md:text-xs"
           title={address}
