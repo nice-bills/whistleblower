@@ -18,7 +18,7 @@
 
 ## Before submit
 
-- [ ] Record a short demo video (registry browse → faucet mint → wrap → decrypt → unwrap)
+- [ ] Record a short demo video (registry browse → faucet mint → wrap → decrypt → unwrap) — see [`docs/DEMO_VIDEO.md`](./DEMO_VIDEO.md)
 - [ ] Deploy frontend (Vercel / Cloudflare Pages / similar) with public URL
 - [ ] Submit via official **Bounty Track** form on the [Season 3 post](https://www.zama.org/post/zama-developer-program-mainnet-season-3-composable-privacy-is-the-key)
 - [ ] Share on X tagging **@zama** with **#ZamaDeveloperProgram**

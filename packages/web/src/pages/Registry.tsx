@@ -4,17 +4,18 @@ import { Link } from "react-router-dom";
 import { useAccount } from "wagmi";
 import AddressLink from "../components/AddressLink";
 import StatusMessage from "../components/StatusMessage";
-import { REGISTRY_ADDRESSES, chainLabel, isSupportedChainId } from "../config";
+import { useActiveChainId } from "../context/ViewChainContext";
+import { REGISTRY_ADDRESSES, chainLabel } from "../config";
 
 const PAGE_SIZE = 50;
 
 export default function Registry() {
-  const { chainId } = useAccount();
+  const { chainId, isConnected } = useAccount();
   const [page, setPage] = useState(1);
   const [validOnly, setValidOnly] = useState(true);
   const [query, setQuery] = useState("");
 
-  const activeChainId = chainId && isSupportedChainId(chainId) ? chainId : 11155111;
+  const activeChainId = useActiveChainId(chainId, isConnected);
 
   const registryAddress = useWrappersRegistryAddress();
   const { data: totalPairs } = useTokenPairsLength();

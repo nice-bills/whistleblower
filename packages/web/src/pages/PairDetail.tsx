@@ -16,7 +16,7 @@ import { useAccount, useReadContract } from "wagmi";
 import AddressLink from "../components/AddressLink";
 import StatusMessage from "../components/StatusMessage";
 import TxLink from "../components/TxLink";
-import { isSupportedChainId } from "../config";
+import { useActiveChainId } from "../context/ViewChainContext";
 import type { TokenWrapperPair } from "@zama-fhe/react-sdk";
 
 type StatusState =
@@ -41,7 +41,7 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
   const pairFromNav = (location.state as { pair?: TokenWrapperPair } | null)?.pair;
 
   const { address, chainId, isConnected } = useAccount();
-  const activeChainId = chainId && isSupportedChainId(chainId) ? chainId : 11155111;
+  const activeChainId = useActiveChainId(chainId, isConnected);
 
   const { data: underlyingLookup } = useTokenAddress({
     confidentialTokenAddress: confidential,

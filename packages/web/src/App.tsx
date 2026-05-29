@@ -1,4 +1,5 @@
 import { Route, Routes } from "react-router-dom";
+import DemoAutoConnect from "./components/DemoAutoConnect";
 import SiteHeader from "./components/SiteHeader";
 import Faucet from "./pages/Faucet";
 import PairDetail from "./pages/PairDetail";
@@ -7,6 +8,7 @@ import Registry from "./pages/Registry";
 export default function App() {
   return (
     <div className="app-shell">
+      <DemoAutoConnect />
       <SiteHeader />
       <main className="app-main">
         <Routes>

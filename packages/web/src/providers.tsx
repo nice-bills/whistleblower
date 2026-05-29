@@ -9,13 +9,24 @@ import {
 import { WagmiSigner } from "@zama-fhe/react-sdk/wagmi";
 import { type ReactNode, useState } from "react";
 import { WagmiProvider, createConfig, http } from "wagmi";
-import { injected } from "wagmi/connectors";
+import { injected, mock } from "wagmi/connectors";
 import { mainnet, sepolia } from "wagmi/chains";
 import { MAINNET_RPC, SEPOLIA_RPC } from "./config";
+import { ViewChainProvider } from "./context/ViewChainContext";
+
+const demoMockWallet = import.meta.env.VITE_DEMO_MOCK_WALLET === "true";
 
 export const wagmiConfig = createConfig({
   chains: [mainnet, sepolia],
-  connectors: [injected()],
+  connectors: demoMockWallet
+    ? [
+        mock({
+          accounts: ["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"],
+          features: { defaultConnected: true },
+        }),
+        injected(),
+      ]
+    : [injected()],
   transports: {
     [mainnet.id]: http(MAINNET_RPC),
     [sepolia.id]: http(SEPOLIA_RPC),
@@ -39,7 +50,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <ZamaProvider relayer={relayer} signer={wagmiSigner} storage={indexedDBStorage}>
-          {children}
+          <ViewChainProvider>{children}</ViewChainProvider>
         </ZamaProvider>
       </QueryClientProvider>
     </WagmiProvider>

@@ -1,24 +1,71 @@
 import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi";
 import { mainnet, sepolia } from "wagmi/chains";
-import { isSupportedChainId } from "../config";
+import { isSupportedChainId, type SupportedChainId } from "../config";
+import { useViewChain } from "../context/ViewChainContext";
+
+function ChainPills({
+  activeId,
+  onSelect,
+  disabled,
+}: {
+  activeId: SupportedChainId;
+  onSelect: (id: SupportedChainId) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="chain-switch" role="group" aria-label="Network">
+      <button
+        type="button"
+        className={activeId === sepolia.id ? "chain-chip is-active" : "chain-chip"}
+        disabled={disabled}
+        onClick={() => onSelect(sepolia.id)}
+      >
+        Sepolia
+      </button>
+      <button
+        type="button"
+        className={activeId === mainnet.id ? "chain-chip is-active" : "chain-chip"}
+        disabled={disabled}
+        onClick={() => onSelect(mainnet.id)}
+      >
+        Mainnet
+      </button>
+    </div>
+  );
+}
 
 export default function ConnectWallet() {
   const { address, chainId, isConnected } = useAccount();
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
-  const { switchChain } = useSwitchChain();
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
+  const { viewChainId, setViewChainId } = useViewChain();
+
+  const walletChainId =
+    isConnected && chainId !== undefined && isSupportedChainId(chainId) ? chainId : viewChainId;
+
+  function selectChain(id: SupportedChainId) {
+    if (isConnected) {
+      switchChain({ chainId: id });
+    } else {
+      setViewChainId(id);
+    }
+  }
 
   if (!isConnected) {
     const connector = connectors[0];
     return (
-      <button
-        type="button"
-        className="btn btn--primary"
-        disabled={!connector || isPending}
-        onClick={() => connector && connect({ connector })}
-      >
-        {isPending ? "Connecting…" : "Connect wallet"}
-      </button>
+      <div className="wallet-bar">
+        <ChainPills activeId={walletChainId} onSelect={selectChain} disabled={isSwitching} />
+        <button
+          type="button"
+          className="btn btn--primary"
+          disabled={!connector || isPending}
+          onClick={() => connector && connect({ connector })}
+        >
+          {isPending ? "Connecting…" : "Connect wallet"}
+        </button>
+      </div>
     );
   }
 
@@ -35,22 +82,7 @@ export default function ConnectWallet() {
           Use Sepolia
         </button>
       )}
-      <div className="chain-switch" role="group" aria-label="Network">
-        <button
-          type="button"
-          className={chainId === sepolia.id ? "chain-chip is-active" : "chain-chip"}
-          onClick={() => switchChain({ chainId: sepolia.id })}
-        >
-          Sepolia
-        </button>
-        <button
-          type="button"
-          className={chainId === mainnet.id ? "chain-chip is-active" : "chain-chip"}
-          onClick={() => switchChain({ chainId: mainnet.id })}
-        >
-          Mainnet
-        </button>
-      </div>
+      <ChainPills activeId={walletChainId} onSelect={selectChain} disabled={isSwitching} />
       <button type="button" className="btn btn--ghost btn--sm" onClick={() => disconnect()}>
         Disconnect
       </button>
