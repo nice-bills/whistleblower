@@ -8,8 +8,9 @@ type Props = {
 };
 
 export default function StatusMessage({ variant = "info", children }: Props) {
+  const role = variant === "error" ? "alert" : "status";
   return (
-    <div className={`status-message status-message--${variant}`} role="status">
+    <div className={`status-message status-message--${variant}`} role={role}>
       {children}
     </div>
   );
