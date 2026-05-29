@@ -52,28 +52,102 @@ export default function Registry() {
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1;
 
+  const previewPairs = items.slice(0, 3);
+
   return (
     <>
-      <header className="page-hero">
-        <p className="page-hero__eyebrow">On-chain directory</p>
-        <h1 className="page-hero__title">Every official confidential wrapper pair.</h1>
-        <p className="page-hero__lede">
-          Browse ERC-20 ↔ ERC-7984 mappings from the Zama registry. Wrap, decrypt balances with
-          EIP-712, and unwrap on Sepolia or mainnet.
-        </p>
-      </header>
+      <section className="hero-split" aria-labelledby="hero-title">
+        <div className="hero-split__copy">
+          <p className="hero-split__tag">Confidential wrappers</p>
+          <h1 id="hero-title" className="hero-split__title">
+            Every official pair, <em>one</em> calm place.
+          </h1>
+          <p className="hero-split__lede">
+            Browse ERC-20 to ERC-7984 mappings from the Zama registry. Wrap, decrypt balances with
+            EIP-712, and unwrap on Sepolia or mainnet.
+          </p>
+          <div className="hero-split__actions">
+            <a href="#registry-panel" className="btn btn--primary">
+              Browse pairs
+            </a>
+            <Link to="/faucet" className="btn btn--ghost">
+              Sepolia faucet
+            </Link>
+          </div>
+        </div>
 
-      <section className="panel" aria-labelledby="registry-heading">
+        <div className="hero-visual" aria-hidden>
+          <div className="hero-visual__blob hero-visual__blob--1" />
+          <div className="hero-visual__blob hero-visual__blob--2" />
+          <div className="hero-visual__cards">
+            {(previewPairs.length > 0
+              ? previewPairs.map((pair) => {
+                  const meta =
+                    "underlying" in pair
+                      ? (pair as {
+                          underlying: { symbol: string };
+                          confidential: { symbol: string };
+                        })
+                      : null;
+                  return (
+                    <div key={pair.confidentialTokenAddress} className="hero-visual__card">
+                      <span className="hero-visual__pair">
+                        {meta?.underlying.symbol ?? "ERC-20"}
+                        <span className="pair-card__arrow"> → </span>
+                        {meta?.confidential.symbol ?? "cToken"}
+                      </span>
+                      <span className="hero-visual__badge">{pair.isValid ? "Valid" : "Revoked"}</span>
+                    </div>
+                  );
+                })
+              : [
+                  { u: "USDC", c: "cUSDC" },
+                  { u: "DAI", c: "cDAI" },
+                  { u: "ETH", c: "cETH" },
+                ].map((sample) => (
+                  <div key={sample.c} className="hero-visual__card">
+                    <span className="hero-visual__pair">
+                      {sample.u}
+                      <span className="pair-card__arrow"> → </span>
+                      {sample.c}
+                    </span>
+                    <span className="hero-visual__badge">Valid</span>
+                  </div>
+                ))
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="steps-strip" aria-label="How it works">
+        <article className="step-card">
+          <p className="step-card__num">01</p>
+          <h2 className="step-card__title">Pick a pair</h2>
+          <p className="step-card__desc">Find your underlying and confidential token in the registry.</p>
+        </article>
+        <article className="step-card">
+          <p className="step-card__num">02</p>
+          <h2 className="step-card__title">Wrap & decrypt</h2>
+          <p className="step-card__desc">Shield tokens and sign EIP-712 to view your balance.</p>
+        </article>
+        <article className="step-card">
+          <p className="step-card__num">03</p>
+          <h2 className="step-card__title">Unwrap anytime</h2>
+          <p className="step-card__desc">Move back to public ERC-20 when you are ready.</p>
+        </article>
+      </section>
+
+      <section id="registry-panel" className="panel" aria-labelledby="registry-heading">
         <div className="panel__head">
           <div>
             <h2 id="registry-heading" className="panel__title">
-              Registry
+              All pairs
             </h2>
             <p className="panel__desc">
               {totalPairs !== undefined ? (
                 <>
-                  <strong>{totalPairs.toString()}</strong> pairs indexed on{" "}
-                  {chainLabel(activeChainId).toLowerCase()}.
+                  <strong>{totalPairs.toString()}</strong> pairs on{" "}
+                  {chainLabel(activeChainId).toLowerCase()}
                 </>
               ) : (
                 "Loading pair count…"
@@ -82,14 +156,14 @@ export default function Registry() {
           </div>
         </div>
 
-        <div className="stat-row">
-          <div className="stat-cell">
-            <span className="stat-cell__label">Network</span>
-            <span className="stat-cell__value">{chainLabel(activeChainId)}</span>
+        <div className="stat-pills">
+          <div className="stat-pill">
+            <span className="stat-pill__label">Network</span>
+            <span className="stat-pill__value">{chainLabel(activeChainId)}</span>
           </div>
-          <div className="stat-cell">
-            <span className="stat-cell__label">Registry</span>
-            <span className="stat-cell__value">
+          <div className="stat-pill">
+            <span className="stat-pill__label">Registry</span>
+            <span className="stat-pill__value">
               {registryAddress ? (
                 <AddressLink chainId={activeChainId} address={registryAddress} />
               ) : (
@@ -97,9 +171,11 @@ export default function Registry() {
               )}
             </span>
           </div>
-          <div className="stat-cell">
-            <span className="stat-cell__label">Config address</span>
-            <span className="stat-cell__value stat-cell__value--mono">{REGISTRY_ADDRESSES[activeChainId]}</span>
+          <div className="stat-pill">
+            <span className="stat-pill__label">Config</span>
+            <span className="stat-pill__value stat-pill__value--mono">
+              {REGISTRY_ADDRESSES[activeChainId]}
+            </span>
           </div>
         </div>
 
@@ -108,7 +184,7 @@ export default function Registry() {
             <span className="sr-only">Filter pairs</span>
             <input
               type="search"
-              placeholder="Filter by symbol or address…"
+              placeholder="Search symbol or address…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -129,76 +205,65 @@ export default function Registry() {
           </button>
         </div>
 
-        {isLoading && <p className="loading-block">Loading pairs</p>}
+        {isLoading && (
+          <p className="loading-block">
+            <span className="loading-dots">Loading pairs</span>
+          </p>
+        )}
         {error && <StatusMessage variant="error">{error.message}</StatusMessage>}
 
         {!isLoading && !error && (
           <>
-            <div className="table-scroll">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Status</th>
-                    <th scope="col">Underlying</th>
-                    <th scope="col">Confidential</th>
-                    <th scope="col">
-                      <span className="sr-only">Actions</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.length === 0 && (
-                    <tr>
-                      <td colSpan={4}>
-                        <p className="empty-state">No pairs match this page or filter.</p>
-                      </td>
-                    </tr>
-                  )}
-                  {items.map((pair) => {
-                    const meta =
-                      "underlying" in pair
-                        ? (pair as {
-                            underlying: { symbol: string; name: string };
-                            confidential: { symbol: string; name: string };
-                          })
-                        : null;
-                    return (
-                      <tr key={`${pair.tokenAddress}-${pair.confidentialTokenAddress}`}>
-                        <td>
-                          <span className={pair.isValid ? "badge badge--valid" : "badge badge--revoked"}>
-                            {pair.isValid ? "Valid" : "Revoked"}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="token-stack">
-                            <span className="token-stack__symbol">{meta?.underlying.symbol ?? "ERC-20"}</span>
-                            <span className="token-stack__name">{meta?.underlying.name}</span>
-                            <AddressLink chainId={activeChainId} address={pair.tokenAddress} />
-                          </div>
-                        </td>
-                        <td>
-                          <div className="token-stack">
-                            <span className="token-stack__symbol">
-                              {meta?.confidential.symbol ?? "ERC-7984"}
-                            </span>
-                            <span className="token-stack__name">{meta?.confidential.name}</span>
-                            <AddressLink chainId={activeChainId} address={pair.confidentialTokenAddress} />
-                          </div>
-                        </td>
-                        <td>
-                          <Link
-                            className="btn btn--primary btn--sm"
-                            to={`/pair/${pair.confidentialTokenAddress}`}
-                            state={{ pair }}
-                          >
-                            Open pair
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="pair-grid">
+              {items.length === 0 && (
+                <p className="empty-state">No pairs match this page or filter.</p>
+              )}
+              {items.map((pair) => {
+                const meta =
+                  "underlying" in pair
+                    ? (pair as {
+                        underlying: { symbol: string; name: string };
+                        confidential: { symbol: string; name: string };
+                      })
+                    : null;
+                return (
+                  <article
+                    key={`${pair.tokenAddress}-${pair.confidentialTokenAddress}`}
+                    className="pair-card"
+                  >
+                    <div className="pair-card__top">
+                      <div>
+                        <p className="pair-card__symbols">
+                          {meta?.underlying.symbol ?? "ERC-20"}
+                          <span className="pair-card__arrow"> → </span>
+                          {meta?.confidential.symbol ?? "ERC-7984"}
+                        </p>
+                        <p className="pair-card__names">
+                          {meta?.underlying.name}
+                          {meta?.underlying.name && meta?.confidential.name ? " · " : ""}
+                          {meta?.confidential.name}
+                        </p>
+                      </div>
+                      <span className={pair.isValid ? "badge badge--valid" : "badge badge--revoked"}>
+                        {pair.isValid ? "Valid" : "Revoked"}
+                      </span>
+                    </div>
+                    <div className="pair-card__addrs">
+                      <AddressLink chainId={activeChainId} address={pair.tokenAddress} />
+                      <AddressLink chainId={activeChainId} address={pair.confidentialTokenAddress} />
+                    </div>
+                    <div className="pair-card__footer">
+                      <Link
+                        className="btn btn--primary btn--sm"
+                        to={`/pair/${pair.confidentialTokenAddress}`}
+                        state={{ pair }}
+                      >
+                        Open pair
+                      </Link>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
 
             <div className="pagination">
@@ -208,7 +273,7 @@ export default function Registry() {
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
-                ← Previous
+                Previous
               </button>
               <span>
                 Page {page} of {totalPages} · {data?.total ?? 0} total
@@ -219,7 +284,7 @@ export default function Registry() {
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
               >
-                Next →
+                Next
               </button>
             </div>
           </>

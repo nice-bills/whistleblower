@@ -7,7 +7,7 @@ export default function SiteHeader() {
       <div className="site-header__inner">
         <NavLink to="/" className="brand" end>
           <span className="brand__mark" aria-hidden>
-            ◈
+            ◆
           </span>
           <span className="brand__text">
             <span className="brand__name">Wrapper Registry</span>

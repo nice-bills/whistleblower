@@ -143,14 +143,25 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
     }
   }
 
+  const publicBalDisplay =
+    publicBalance !== undefined ? formatUnits(publicBalance as bigint, decimals) : "…";
+
+  const confidentialBalDisplay = !isAllowed
+    ? "Sign to decrypt"
+    : balanceLoading
+      ? "…"
+      : confidentialBalance !== undefined
+        ? formatUnits(confidentialBalance, decimals)
+        : "…";
+
   return (
     <>
       <Link to="/" className="page-back">
-        ← Registry
+        ← Back to registry
       </Link>
 
       <header className="page-hero" style={{ paddingTop: 0 }}>
-        <p className="page-hero__eyebrow">{valid ? "Valid pair" : "Revoked — do not wrap"}</p>
+        <p className="page-hero__tag">{valid ? "Valid pair" : "Revoked: do not wrap"}</p>
         <h1 className="pair-heading">
           {underlyingMeta?.symbol ?? "…"}
           <span className="pair-heading__arrow"> → </span>
@@ -162,24 +173,24 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
         </p>
       </header>
 
-      <div className="stat-row">
-        <div className="stat-cell">
-          <span className="stat-cell__label">Status</span>
-          <span className="stat-cell__value">
+      <div className="stat-pills">
+        <div className="stat-pill">
+          <span className="stat-pill__label">Status</span>
+          <span className="stat-pill__value">
             <span className={valid ? "badge badge--valid" : "badge badge--revoked"}>
               {valid ? "Valid" : "Revoked"}
             </span>
           </span>
         </div>
-        <div className="stat-cell">
-          <span className="stat-cell__label">Underlying ERC-20</span>
-          <span className="stat-cell__value">
+        <div className="stat-pill">
+          <span className="stat-pill__label">Underlying</span>
+          <span className="stat-pill__value">
             <AddressLink chainId={activeChainId} address={underlying} />
           </span>
         </div>
-        <div className="stat-cell">
-          <span className="stat-cell__label">Confidential wrapper</span>
-          <span className="stat-cell__value">
+        <div className="stat-pill">
+          <span className="stat-pill__label">Confidential</span>
+          <span className="stat-pill__value">
             <AddressLink chainId={activeChainId} address={confidential} />
           </span>
         </div>
@@ -192,26 +203,18 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
       {isConnected && (
         <div className="flow-grid">
           <article className="flow-card">
-            <p className="flow-card__step">Step 1</p>
+            <div className="flow-card__icon flow-card__icon--balance" aria-hidden>
+              ◎
+            </div>
             <h2 className="flow-card__title">Balances</h2>
             <ul className="balance-list">
               <li>
                 <span className="balance-list__label">Public {underlyingMeta?.symbol}</span>
-                <span className="balance-list__value">
-                  {publicBalance !== undefined ? formatUnits(publicBalance as bigint, decimals) : "—"}
-                </span>
+                <span className="balance-list__value">{publicBalDisplay}</span>
               </li>
               <li>
                 <span className="balance-list__label">Confidential {confidentialMeta?.symbol}</span>
-                <span className="balance-list__value">
-                  {!isAllowed
-                    ? "Sign to decrypt"
-                    : balanceLoading
-                      ? "…"
-                      : confidentialBalance !== undefined
-                        ? formatUnits(confidentialBalance, decimals)
-                        : "—"}
-                </span>
+                <span className="balance-list__value">{confidentialBalDisplay}</span>
               </li>
             </ul>
             <button
@@ -229,10 +232,12 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
           </article>
 
           <article className="flow-card">
-            <p className="flow-card__step">Step 2</p>
-            <h2 className="flow-card__title">Wrap (shield)</h2>
+            <div className="flow-card__icon flow-card__icon--wrap" aria-hidden>
+              ↓
+            </div>
+            <h2 className="flow-card__title">Wrap</h2>
             <label className="field-label" htmlFor="wrap-amount">
-              Amount · {underlyingMeta?.symbol ?? "tokens"}
+              Amount ({underlyingMeta?.symbol ?? "tokens"})
             </label>
             <input
               id="wrap-amount"
@@ -254,8 +259,10 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
           </article>
 
           <article className="flow-card">
-            <p className="flow-card__step">Step 3</p>
-            <h2 className="flow-card__title">Unwrap (unshield)</h2>
+            <div className="flow-card__icon flow-card__icon--unwrap" aria-hidden>
+              ↑
+            </div>
+            <h2 className="flow-card__title">Unwrap</h2>
             <label className="field-label" htmlFor="unwrap-amount">
               Amount
             </label>
@@ -268,7 +275,7 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
               onChange={(e) => setUnwrapAmount(e.target.value)}
               placeholder="Leave empty for full balance"
             />
-            <p className="field-hint">SDK runs unwrap request and finalize in one flow.</p>
+            <p className="field-hint">Leave blank to unshield your full confidential balance.</p>
             <button
               type="button"
               className="btn btn--primary"

@@ -12,6 +12,8 @@ import {
   SEPOLIA_MOCK_FAUCET_TOKENS,
 } from "../constants/sepolia-mocks";
 
+const CARD_THEMES = ["faucet-card--blue", "faucet-card--mint", "faucet-card--peach", "faucet-card--lavender"] as const;
+
 type StatusState =
   | { variant: "success"; message: string; txHash: string }
   | { variant: "error"; message: string }
@@ -51,11 +53,11 @@ export default function Faucet() {
   return (
     <>
       <header className="page-hero">
-        <p className="page-hero__eyebrow">Sepolia testnet</p>
-        <h1 className="page-hero__title">Mock token faucet.</h1>
+        <p className="page-hero__tag">Sepolia testnet</p>
+        <h1 className="page-hero__title">Mock token faucet</h1>
         <p className="page-hero__lede">
           Mint official cTokenMock underlyings, then wrap them through any registry pair. One click
-          per token — up to 10,000 units each.
+          per token, up to 10,000 units each.
         </p>
       </header>
 
@@ -71,18 +73,23 @@ export default function Faucet() {
           <StatusMessage variant="info">Connect a wallet in the header to mint test tokens.</StatusMessage>
         )}
         {isConnected && !onSepolia && (
-          <StatusMessage variant="warn">Switch to Sepolia — mock mint is only available on testnet.</StatusMessage>
+          <StatusMessage variant="warn">Switch to Sepolia. Mock mint is only available on testnet.</StatusMessage>
         )}
 
         <div className="faucet-grid">
-          {SEPOLIA_MOCK_FAUCET_TOKENS.map((token) => (
-            <article key={token.underlying} className="faucet-card">
+          {SEPOLIA_MOCK_FAUCET_TOKENS.map((token, index) => (
+            <article
+              key={token.underlying}
+              className={`faucet-card ${CARD_THEMES[index % CARD_THEMES.length]}`}
+            >
+              <p className="faucet-card__symbol">{token.symbol}</p>
               <h3 className="faucet-card__name">{token.name}</h3>
               <p className="faucet-card__meta">
-                Underlying · <AddressLink chainId={sepolia.id} address={token.underlying} />
+                Underlying{" "}
+                <AddressLink chainId={sepolia.id} address={token.underlying} />
               </p>
               <p className="faucet-card__meta">
-                Wrapper ·{" "}
+                Wrapper{" "}
                 <Link to={`/pair/${token.confidential}`} className="mono-link">
                   {token.confidential.slice(0, 10)}…
                 </Link>
