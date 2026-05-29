@@ -1,45 +1,44 @@
-# Zama Developer Program — Builder Track checklist
+# Zama Developer Program — Bounty Track checklist
 
 **Season 3** · Deadline **2026-07-07 23:59 AOE**
 
 ## Project
 
-**Confidential Whistleblower** — public document CID + FHE-encrypted source metadata + investigator selective decryption.
+**Confidential Wrapper Registry** — explorer + wrap/unwrap + EIP-712 balance decrypt + Sepolia cTokenMock faucet for the official Zama Wrappers Registry.
 
-## Required deliverables
+## Bounty requirements mapping
 
-- [ ] Confidential smart contract deployed on **Sepolia** or **Ethereum mainnet**
-- [ ] Frontend (functional submit + investigator decrypt)
-- [ ] Clear documentation (root README + architecture)
-- [ ] **3-minute video pitch** demoing end-to-end flow
-- [ ] Submit via official Builder Track form (link on [Season 3 post](https://www.zama.org/post/zama-developer-program-mainnet-season-3-composable-privacy-is-the-key))
+| Requirement | Status | Notes |
+|-------------|--------|-------|
+| List all registry pairs (Sepolia + mainnet) | Implemented | `useListPairs` with metadata, pagination, valid/revoked filter |
+| Wrap any valid pair | Implemented | `useShield` on pair detail |
+| Unwrap any valid pair | Implemented | `useUnshield` / `useUnshieldAll` |
+| Decrypt ERC-7984 balance (EIP-712) | Implemented | `useAllow` + `useConfidentialBalance` |
+| Sepolia faucet for official cTokenMocks | Implemented | `mint` on documented mock underlying tokens |
+
+## Before submit
+
+- [ ] Record a short demo video (registry browse → faucet mint → wrap → decrypt → unwrap)
+- [ ] Deploy frontend (Vercel / Cloudflare Pages / similar) with public URL
+- [ ] Submit via official **Bounty Track** form on the [Season 3 post](https://www.zama.org/post/zama-developer-program-mainnet-season-3-composable-privacy-is-the-key)
 - [ ] Share on X tagging **@zama** with **#ZamaDeveloperProgram**
 
-## Suggested demo script (video)
+## Suggested demo script
 
-1. Intro: contrast with Logos public whistleblower — source protection problem (30s)
-2. Submitter uploads document → public IPFS CID on-chain (45s)
-3. Show block explorer: CID visible, encrypted handles opaque (30s)
-4. Owner grants investigator + `shareSubmissionWithInvestigator` (30s)
-5. Investigator wallet decrypts reporter + risk tier; unprivileged wallet cannot (45s)
-6. Close: FHE enables composable privacy for accountability journalism (20s)
+1. Open registry on Sepolia — show pair count and valid badges (30s)
+2. Faucet: mint cUSDCMock underlying (30s)
+3. Open pair — wrap 100 tokens (45s)
+4. Authorize EIP-712 decrypt — show confidential balance (45s)
+5. Unwrap back to ERC-20 (30s)
+6. Switch to mainnet — show mainnet pairs load from same UI (20s)
 
 ## Rewards (reference)
 
 | Place | cUSDT |
 |-------|-------|
-| 1st | 2,500 |
-| 2nd | 1,750 |
-| 3rd | 1,250 |
-| 4th | 1,000 |
-| 5th | 500 |
-
-## Technical verification before submit
-
-```bash
-pnpm test
-cd packages/contracts && pnpm exec hardhat fhevm check-fhevm-compatibility --network sepolia --address <ADDR>
-```
+| 1st | 1,500 |
+| 2nd | 1,000 |
+| 3rd | 500 |
 
 ## Support
 

@@ -1,57 +1,54 @@
-# Confidential Whistleblower
+# Confidential Wrapper Registry
 
-Anonymous whistleblowing with **selective disclosure** on [Zama FHEVM](https://docs.zama.ai/protocol) — built for the [Zama Developer Program Mainnet Season 3](https://www.zama.org/post/zama-developer-program-mainnet-season-3-composable-privacy-is-the-key) **Builder Track**.
+Production-oriented explorer for the [official Zama Confidential Token Wrappers Registry](https://docs.zama.org/protocol/protocol-apps/confidential-tokens/wrapper-registry) — built for [Zama Developer Program Mainnet Season 3](https://www.zama.org/post/zama-developer-program-mainnet-season-3-composable-privacy-is-the-key) **Bounty Track**.
 
-## Concept (vs Logos Whistleblower)
+## What it does
 
-| | [Logos LP-0017 Whistleblower](https://github.com/logos-co/lambda-prize/blob/master/prizes/LP-0017.md) | This project |
-|---|--------|----------------|
-| Goal | Censorship-resistant **public** document publication | **Source-protected** submissions |
-| Document | Public CID + metadata broadcast | **Public CID**, sensitive metadata **encrypted on-chain** |
-| Identity | No on-chain identity binding (by design) | Submitter context encrypted (`eaddress`, extensible fields) |
-| Disclosure | Permanent public index | **Authorized investigators** decrypt via FHEVM user-decryption |
+| Requirement | Implementation |
+|-------------|----------------|
+| Surface ERC-20 ↔ ERC-7984 pairs (Sepolia + mainnet) | Paginated registry table via `@zama-fhe/react-sdk` `useListPairs` + on-chain pair count |
+| Wrap / unwrap any valid pair | Per-pair page: `useShield` (wrap) and `useUnshield` / `useUnshieldAll` (unwrap) |
+| Decrypt ERC-7984 balance (EIP-712) | `useAllow` + `useConfidentialBalance` user-decryption flow |
+| Sepolia faucet for cTokenMocks | Mint official mock underlying ERC-20s (public `mint`, 10k units per click) |
 
-FHE is not applied to “hide the document” — the leak is the document. FHE protects **who submitted** and **encrypted metadata** until an authorized party decrypts.
+The whistleblower Hardhat package remains in `packages/contracts` as an earlier Builder Track experiment; the active submission target is this registry web app.
 
 ## Monorepo
 
 ```
-confidential-whistleblower/
-├── packages/contracts/   # FHEVM Hardhat — ConfidentialWhistleblower.sol
-├── packages/web/         # Vite + React — submit + investigator UI (stubs)
-└── docs/                 # Architecture, cloud handoff, submission checklist
+confidential-wrapper-registry/
+├── packages/web/          # Vite + React + wagmi + @zama-fhe/react-sdk
+├── packages/contracts/    # (legacy) FHEVM whistleblower contract
+└── docs/                  # Architecture + bounty submission checklist
 ```
 
 ## Quick start
 
 ```bash
-# From repo root
 pnpm install
-
-# Contracts (mock FHE, fast)
-pnpm compile
-pnpm test
-
-# Frontend
 pnpm dev
 ```
 
-### Sepolia deploy (when ready)
+Open the Vite URL (default `http://localhost:5173`). Connect a wallet on **Sepolia** or **Ethereum mainnet**.
+
+Optional RPC overrides in `packages/web/.env`:
 
 ```bash
-cd packages/contracts
-pnpm exec hardhat vars set MNEMONIC
-pnpm exec hardhat vars set INFURA_API_KEY
-pnpm deploy:sepolia
+VITE_SEPOLIA_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
+VITE_MAINNET_RPC_URL=https://ethereum-rpc.publicnode.com
 ```
 
-Copy deployed address to `packages/web/.env` as `VITE_CONTRACT_ADDRESS`.
+## Deployed registry addresses
 
-## Docs for cloud agent
+| Network | Registry |
+|---------|----------|
+| Sepolia | `0x2f0750Bbb0A246059d80e94c454586a7F27a128e` |
+| Mainnet | `0xeb5015fF021DB115aCe010f23F55C2591059bBA0` |
 
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — data model, trust boundaries, FHE flows
-- [`docs/CLOUD_AGENT.md`](docs/CLOUD_AGENT.md) — prioritized backlog and handoff notes
-- [`docs/SUBMISSION.md`](docs/SUBMISSION.md) — Season 3 Builder Track checklist (deadline **2026-07-07**)
+## Docs
+
+- [`docs/SUBMISSION.md`](docs/SUBMISSION.md) — Bounty Track checklist (deadline **2026-07-07**)
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — technical overview
 
 ## License
 

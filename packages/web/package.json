@@ -1,5 +1,5 @@
 {
-  "name": "@confidential-whistleblower/web",
+  "name": "@confidential-wrapper-registry/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,11 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.80.7",
+    "@zama-fhe/react-sdk": "^3.0.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.2",
     "viem": "^2.31.0",
-    "wagmi": "^2.15.6"
+    "wagmi": "^3.5.0"
   },
   "devDependencies": {
     "@types/react": "^19.1.6",
