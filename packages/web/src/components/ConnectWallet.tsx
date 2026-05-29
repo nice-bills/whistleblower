@@ -13,7 +13,7 @@ export default function ConnectWallet() {
     return (
       <button
         type="button"
-        className="btn primary"
+        className="btn btn--primary"
         disabled={!connector || isPending}
         onClick={() => connector && connect({ connector })}
       >
@@ -31,27 +31,27 @@ export default function ConnectWallet() {
         {short}
       </span>
       {!onSupported && (
-        <button type="button" className="btn warn" onClick={() => switchChain({ chainId: sepolia.id })}>
-          Switch to Sepolia
+        <button type="button" className="btn btn--warn btn--sm" onClick={() => switchChain({ chainId: sepolia.id })}>
+          Use Sepolia
         </button>
       )}
-      <div className="chain-switch">
+      <div className="chain-switch" role="group" aria-label="Network">
         <button
           type="button"
-          className={chainId === sepolia.id ? "chip active" : "chip"}
+          className={chainId === sepolia.id ? "chain-chip is-active" : "chain-chip"}
           onClick={() => switchChain({ chainId: sepolia.id })}
         >
           Sepolia
         </button>
         <button
           type="button"
-          className={chainId === mainnet.id ? "chip active" : "chip"}
+          className={chainId === mainnet.id ? "chain-chip is-active" : "chain-chip"}
           onClick={() => switchChain({ chainId: mainnet.id })}
         >
           Mainnet
         </button>
       </div>
-      <button type="button" className="btn ghost" onClick={() => disconnect()}>
+      <button type="button" className="btn btn--ghost btn--sm" onClick={() => disconnect()}>
         Disconnect
       </button>
     </div>
