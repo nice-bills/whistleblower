@@ -87,8 +87,18 @@ pnpm dev
 - [Relayer SDK](https://github.com/zama-ai/sdk) — `@zama-fhe/relayer-sdk`, `@zama-fhe/react-sdk`
 - [OpenZeppelin confidential integration guide](https://docs.zama.org/protocol/examples/openzeppelin-confidential-contracts/integration-guide)
 
-## Questions to resolve with user
+## Product defaults chosen with user
 
-- Investigator set: single owner-controlled vs multisig?
-- Is `encryptedReporter` the real `msg.sender` encrypted, or a throwaway wallet the user encrypts separately?
-- Storage: IPFS only vs also mirror on Arweave
+These decisions should guide the MVP unless the user explicitly changes direction:
+
+- Build selective source protection, not encrypted publication: the document CID is public while source metadata is encrypted on-chain.
+- Use a single owner/admin wallet for v1 investigator access.
+- Treat `encryptedReporter` as a pseudonymous or throwaway source address, not proof of full anonymity.
+- Start with IPFS/public CID flow; use user-provided CID or simple pinning first if needed to move faster.
+- Optimize the demo for: submit public CID → encrypted metadata stored → owner grants/shares to investigator → investigator decrypts → outsider fails.
+
+## Deferred product questions
+
+- When to add relayers/account abstraction to reduce `msg.sender` and funding-link leakage.
+- Whether to expand from owner wallet to multisig or DAO governance.
+- Whether to mirror documents on Arweave after the IPFS path works.

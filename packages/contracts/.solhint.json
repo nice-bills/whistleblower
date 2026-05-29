@@ -1,0 +1,10 @@
+{
+  "extends": "solhint:recommended",
+  "rules": {
+    "func-visibility": "off",
+    "gas-custom-errors": "off",
+    "gas-increment-by-one": "off",
+    "gas-indexed-events": "off",
+    "use-natspec": "off"
+  }
+}
