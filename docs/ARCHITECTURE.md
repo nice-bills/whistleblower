@@ -1,94 +1,76 @@
-# Architecture
+# Architecture — Confidential Wrapper Registry
 
-## Problem
+## Goal
 
-Logos **Whistleblower** ([LP-0017](https://github.com/logos-co/lambda-prize/blob/master/prizes/LP-0017.md)) optimizes for **censorship-resistant public publication**: upload → broadcast CID → optional on-chain anchor. Identity is intentionally not bound on-chain.
+Turn the on-chain [Confidential Token Wrappers Registry](https://docs.zama.org/protocol/protocol-apps/confidential-tokens/wrapper-registry) into a product developers and users can bookmark: discover pairs, move funds in and out of confidentiality, and read decrypted balances with standard EIP-712 authorization.
 
-Real whistleblowing also needs **source protection**: the document may need to be public (or shareable with journalists) while **submitter identity and context** stay confidential until a trusted party is allowed to see them.
+## Stack
 
-## Solution
+- **Frontend:** React 19, Vite 6, React Router 7
+- **Wallet:** wagmi 2 + injected connector (Sepolia + mainnet)
+- **FHE / confidential tokens:** `@zama-fhe/react-sdk` 3.x
+  - `RelayerWeb` with built-in `SepoliaConfig` / `MainnetConfig` (Zama-hosted relayers)
+  - `WagmiSigner` bridges wallet read/write + `signTypedData` for decrypt credentials
 
+## Data flow
+
+```mermaid
+flowchart LR
+  subgraph UI
+    Registry[Registry page]
+    Pair[Pair detail]
+    Faucet[Faucet page]
+  end
+  subgraph OnChain
+    Reg[WrappersRegistry]
+    ERC20[ERC-20 underlying]
+    C7984[ERC-7984 wrapper]
+  end
+  subgraph Zama
+    Relayer[Relayer v2]
+    KMS[KMS / ACL]
+  end
+  Registry -->|read pairs| Reg
+  Pair -->|shield| C7984
+  Pair -->|unshield| C7984
+  Pair -->|balance handle| C7984
+  Pair -->|EIP-712 allow| Relayer
+  Relayer --> KMS
+  Faucet -->|mint| ERC20
+  C7984 --> ERC20
 ```
-┌─────────────┐     encrypt metadata      ┌──────────────────────────────┐
-│  Submitter  │ ────────────────────────► │ ConfidentialWhistleblower    │
-│  (browser)  │     + public documentCid  │ (FHEVM on Sepolia / mainnet) │
-└─────────────┘                           └──────────────┬───────────────┘
-        │                                                │
-        │ IPFS / Filecoin / web3.storage                 │ eaddress, euint*
-        ▼                                                ▼
-┌─────────────┐                           ┌──────────────────────────────┐
-│  Public     │                           │  Coprocessor + KMS           │
-│  document   │                           │  (Zama Protocol)             │
-│  bytes      │                           └──────────────┬───────────────┘
-└─────────────┘                                          │
-                                                           │ user-decrypt (EIP-712)
-┌─────────────┐                                            ▼
-│ Investigator│ ◄──────────────────────────────────────────┘
-│ (allowlisted)│
-└─────────────┘
-```
 
-### Public on-chain
+## Registry reads
 
-- `documentCid` — content address (IPFS CID string)
-- `submittedAt`, `submissionId`
-- Events for indexing
+- `useListPairs({ metadata: true })` — paginated pairs with token names/symbols
+- `useTokenPairsLength()` — total pair count for coverage display
+- `useWrappersRegistryAddress()` — resolves registry for active chain
 
-### Encrypted on-chain (FHE handles)
+Revoked pairs remain visible with `isValid: false` (registry does not delete mappings).
 
-- `encryptedReporter` (`eaddress`) — submitter wallet or pseudonym link (client-encrypted)
-- `encryptedRiskTier` (`euint32`) — example scalar metadata (severity 1–5); extend as needed
+## Wrap / unwrap
 
-Long text (title, description, internal notes) should use one of:
+- **Wrap:** `useShield` — SDK handles ERC-20 approval, wrapper deposit, decimal conversion
+- **Unwrap:** `useUnshield` (amount) or `useUnshieldAll` — SDK runs unwrap request + finalize with public decryption proof
 
-1. **Encrypted off-chain blob** referenced by CID in public `documentCid` or a secondary `metadataCid` field (recommended for v1 demo)
-2. **Multiple encrypted scalars** on-chain if you need homomorphic logic on those fields
-3. Future: chunked `euint*` arrays if the protocol pattern is justified
+`tokenAddress` in SDK hooks refers to the **confidential** (ERC-7984) contract; `wrapperAddress` is set to the same registry-listed wrapper address.
 
-### Access control
+## Balance decryption
 
-- Contract owner adds `investigators` mapping
-- `shareSubmissionWithInvestigator(submissionId, investigator)` calls `FHE.allow` on encrypted fields for that investigator
-- Investigator uses Relayer SDK **user decryption** (EIP-712) in the frontend
+1. User signs EIP-712 via `useAllow([confidentialAddress])`
+2. `useConfidentialBalance({ tokenAddress })` reads the on-chain ciphertext handle and user-decrypts via relayer
+3. Credentials cached in IndexedDB (`indexedDBStorage`) per SDK defaults
 
-Submitter receives `FHE.allow(encryptedReporter, msg.sender)` on submit so they can verify their own ciphertext.
+## Sepolia faucet
 
-## Trust model
+Mock underlying tokens expose `mint(address,uint256)` (max 1M units per call per Zama docs). The faucet page calls mint on the seven documented cTokenMock underlyings; users then wrap via the registry pair routes.
 
-| Actor | Trust |
-|-------|--------|
-| Submitter | Honest encryption client; can choose not to link real identity in `encryptedReporter` |
-| Zama KMS / coprocessors | Protocol trust assumption (threshold MPC) |
-| Owner / investigator list | Centralized gate for who may decrypt — acceptable for “newsroom / ombuds” model |
-| Public | Sees CIDs and submission count, not encrypted fields |
+## Extensibility
 
-This is **not** a mixnet: timing and gas payer can leak hints. Document in README / video for judges.
+- Add search/filter by symbol, export JSON pair list, or “developer snippet” panel (copy addresses + SDK `createToken` example)
+- Optional WalletConnect via `VITE_WALLETCONNECT_PROJECT_ID`
+- Backend RPC proxy only if public RPC limits become an issue; relayers are already public endpoints
 
-## Contract API (v0 scaffold)
+## Legacy package
 
-See `packages/contracts/contracts/ConfidentialWhistleblower.sol`.
-
-| Function | Purpose |
-|----------|---------|
-| `submit(documentCid, encryptedReporter, encryptedRiskTier, proof)` | Create submission |
-| `grantInvestigator` / `revokeInvestigator` | ACL admin |
-| `shareSubmissionWithInvestigator` | `FHE.allow` for a given submission |
-| `getSubmission` | Public + encrypted handles for UI |
-
-## Frontend flows (planned)
-
-1. **Submit** — upload file → IPFS → encrypt reporter + risk tier → `submit` tx
-2. **Browse** — list public CIDs from events / subgraph (optional)
-3. **Investigate** — connect as investigator → `userDecrypt` on allowed handles
-
-## Networks
-
-- Local: Hardhat mock FHE (`npm test`)
-- Target: **Sepolia** (dev), **Ethereum mainnet** (Season 3 submission allowed)
-
-## Out of scope (v0)
-
-- Logos Storage / Delivery integration (different stack)
-- Permissionless batch anchoring
-- On-chain full-text search
-- Decentralized investigator governance
+`packages/contracts` contains a Builder Track whistleblower FHEVM contract; it is not required to run the registry app.

@@ -1,13 +1,14 @@
 {
-  "name": "confidential-whistleblower",
+  "name": "confidential-wrapper-registry",
   "private": true,
   "version": "0.1.0",
-  "description": "Anonymous whistleblower with selective disclosure on Zama FHEVM",
+  "description": "Official Zama Wrappers Registry explorer — Season 3 Bounty Track",
   "packageManager": "pnpm@10.12.1",
   "scripts": {
     "compile": "pnpm --filter @confidential-whistleblower/contracts compile",
     "test": "pnpm --filter @confidential-whistleblower/contracts test",
-    "dev": "pnpm --filter @confidential-whistleblower/web dev",
+    "dev": "pnpm --filter @confidential-wrapper-registry/web dev",
+    "build:web": "pnpm --filter @confidential-wrapper-registry/web build",
     "lint": "pnpm --filter @confidential-whistleblower/contracts lint"
   },
   "engines": {
