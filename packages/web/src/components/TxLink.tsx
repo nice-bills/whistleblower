@@ -6,10 +6,14 @@ type Props = {
 };
 
 export default function TxLink({ chainId, hash }: Props) {
-  const short = `${hash.slice(0, 10)}…${hash.slice(-8)}`;
   return (
-    <a href={explorerTx(chainId, hash)} target="_blank" rel="noreferrer" className="tx-link">
-      {short}
+    <a
+      href={explorerTx(chainId, hash)}
+      target="_blank"
+      rel="noreferrer"
+      className="font-mono text-xs text-white underline-offset-2 hover:text-white/80"
+    >
+      view tx
     </a>
   );
 }

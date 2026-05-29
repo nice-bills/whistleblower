@@ -14,7 +14,7 @@ import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { useAccount, useReadContract } from "wagmi";
 import AddressLink from "../components/AddressLink";
-import RevealOnScroll from "../components/RevealOnScroll";
+import PageShell from "../components/PageShell";
 import StatusMessage from "../components/StatusMessage";
 import TxLink from "../components/TxLink";
 import { useActiveChainId } from "../context/ViewChainContext";
@@ -24,13 +24,24 @@ type StatusState =
   | { variant: "success" | "info" | "error"; message: string; txHash?: string }
   | null;
 
+const inputClass =
+  "w-full rounded-xl border border-white/10 bg-neutral-950 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none";
+
+const cardClass =
+  "flex flex-col gap-4 rounded-2xl border border-white/10 bg-neutral-900/90 p-5 backdrop-blur";
+
+const btnPrimary =
+  "rounded-full bg-white py-2.5 text-sm text-black transition-colors hover:bg-neutral-200 disabled:opacity-40";
+
 export default function PairDetail() {
   const { confidentialAddress } = useParams<{ confidentialAddress: string }>();
   const confidential = (confidentialAddress ?? "") as `0x${string}`;
 
   if (confidential.length !== 42 || !confidential.startsWith("0x")) {
     return (
-      <StatusMessage variant="error">Invalid confidential token address in URL.</StatusMessage>
+      <PageShell title="invalid pair">
+        <StatusMessage variant="error">invalid confidential token address in url.</StatusMessage>
+      </PageShell>
     );
   }
 
@@ -99,13 +110,13 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
     setStatus(null);
     try {
       await allow.mutateAsync([confidential]);
-      setStatus({ variant: "success", message: "EIP-712 authorization signed. Fetching balance…" });
+      setStatus({ variant: "success", message: "eip-712 signed. fetching balance…" });
       await refetchBalance();
     } catch (e) {
       if (e instanceof SigningRejectedError) {
-        setStatus({ variant: "error", message: "Wallet rejected the EIP-712 authorization." });
+        setStatus({ variant: "error", message: "wallet rejected the eip-712 authorization." });
       } else {
-        setStatus({ variant: "error", message: e instanceof Error ? e.message : "Authorization failed." });
+        setStatus({ variant: "error", message: e instanceof Error ? e.message : "authorization failed." });
       }
     }
   }
@@ -117,12 +128,12 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
       const result = await shield.mutateAsync({ amount });
       setStatus({
         variant: "success",
-        message: "Wrapped successfully.",
+        message: "wrapped successfully.",
         txHash: result.txHash,
       });
       await refetchBalance();
     } catch (e) {
-      setStatus({ variant: "error", message: e instanceof Error ? e.message : "Wrap failed." });
+      setStatus({ variant: "error", message: e instanceof Error ? e.message : "wrap failed." });
     }
   }
 
@@ -135,12 +146,12 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
           : await unshield.mutateAsync({ amount: parseUnits(unwrapAmount, decimals) });
       setStatus({
         variant: "success",
-        message: "Unwrap submitted.",
+        message: "unwrap submitted.",
         txHash: result.txHash,
       });
       await refetchBalance();
     } catch (e) {
-      setStatus({ variant: "error", message: e instanceof Error ? e.message : "Unwrap failed." });
+      setStatus({ variant: "error", message: e instanceof Error ? e.message : "unwrap failed." });
     }
   }
 
@@ -148,106 +159,77 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
     publicBalance !== undefined ? formatUnits(publicBalance as bigint, decimals) : "…";
 
   const confidentialBalDisplay = !isAllowed
-    ? "Sign to decrypt"
+    ? "sign to decrypt"
     : balanceLoading
       ? "…"
       : confidentialBalance !== undefined
         ? formatUnits(confidentialBalance, decimals)
         : "…";
 
+  const title = `${underlyingMeta?.symbol ?? "…"} → ${confidentialMeta?.symbol ?? "…"}`;
+
   return (
-    <>
-      <Link to="/" className="page-back">
-        ← Back to registry
-      </Link>
-
-      <RevealOnScroll>
-      <header className="page-hero" style={{ paddingTop: 0 }}>
-        <p className="page-hero__tag">{valid ? "Valid pair" : "Revoked: do not wrap"}</p>
-        <h1 className="pair-heading">
-          {underlyingMeta?.symbol ?? "…"}
-          <span className="pair-heading__arrow"> → </span>
-          {confidentialMeta?.symbol ?? "…"}
-        </h1>
-        <p className="page-hero__lede">
-          Shield public ERC-20 into confidential ERC-7984, authorize decryption, or unshield back to
-          the underlying token.
-        </p>
-      </header>
-      </RevealOnScroll>
-
-      <RevealOnScroll delayMs={60}>
-      <div className="stat-pills">
-        <div className="stat-pill">
-          <span className="stat-pill__label">Status</span>
-          <span className="stat-pill__value">
-            <span className={valid ? "badge badge--valid" : "badge badge--revoked"}>
-              {valid ? "Valid" : "Revoked"}
-            </span>
-          </span>
+    <PageShell
+      title={title.toLowerCase()}
+      description="shield public erc-20 into confidential erc-7984, authorize decryption, or unshield back."
+    >
+      <div className="mb-8 flex flex-wrap gap-3">
+        <span
+          className={[
+            "rounded-full px-3 py-1 text-xs",
+            valid ? "bg-white/15 text-white" : "bg-white/5 text-white/50",
+          ].join(" ")}
+        >
+          {valid ? "valid" : "revoked"}
+        </span>
+        <div className="rounded-2xl border border-white/10 bg-neutral-900/90 px-4 py-2 text-xs backdrop-blur">
+          underlying <AddressLink chainId={activeChainId} address={underlying} />
         </div>
-        <div className="stat-pill">
-          <span className="stat-pill__label">Underlying</span>
-          <span className="stat-pill__value">
-            <AddressLink chainId={activeChainId} address={underlying} />
-          </span>
-        </div>
-        <div className="stat-pill">
-          <span className="stat-pill__label">Confidential</span>
-          <span className="stat-pill__value">
-            <AddressLink chainId={activeChainId} address={confidential} />
-          </span>
+        <div className="rounded-2xl border border-white/10 bg-neutral-900/90 px-4 py-2 text-xs backdrop-blur">
+          confidential <AddressLink chainId={activeChainId} address={confidential} />
         </div>
       </div>
-      </RevealOnScroll>
 
       {!isConnected && (
-        <StatusMessage variant="info">Connect a wallet on Sepolia or mainnet to use this pair.</StatusMessage>
+        <StatusMessage variant="info">connect a wallet on sepolia or mainnet to use this pair.</StatusMessage>
       )}
 
       {isConnected && (
-        <RevealOnScroll delayMs={100}>
-        <div className="flow-grid flow-grid--animate">
-          <article className="flow-card">
-            <div className="flow-card__icon flow-card__icon--balance" aria-hidden>
-              ◎
-            </div>
-            <h2 className="flow-card__title">Balances</h2>
-            <ul className="balance-list">
-              <li>
-                <span className="balance-list__label">Public {underlyingMeta?.symbol}</span>
-                <span className="balance-list__value">{publicBalDisplay}</span>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <article className={cardClass}>
+            <h2 className="text-lg font-medium lowercase text-white">balances</h2>
+            <ul className="space-y-3 text-sm">
+              <li className="flex justify-between border-b border-white/10 pb-2">
+                <span className="text-white/60">public {underlyingMeta?.symbol}</span>
+                <span className="font-mono text-white">{publicBalDisplay}</span>
               </li>
-              <li>
-                <span className="balance-list__label">Confidential {confidentialMeta?.symbol}</span>
-                <span className="balance-list__value">{confidentialBalDisplay}</span>
+              <li className="flex justify-between">
+                <span className="text-white/60">confidential {confidentialMeta?.symbol}</span>
+                <span className="font-mono text-white">{confidentialBalDisplay}</span>
               </li>
             </ul>
             <button
               type="button"
-              className="btn btn--primary"
+              className={btnPrimary}
               onClick={handleAuthorizeDecrypt}
               disabled={allow.isPending}
             >
               {allow.isPending
-                ? "Signing EIP-712…"
+                ? "signing eip-712…"
                 : isAllowed
-                  ? "Re-authorize decrypt"
-                  : "Authorize decrypt"}
+                  ? "re-authorize decrypt"
+                  : "authorize decrypt"}
             </button>
           </article>
 
-          <article className="flow-card">
-            <div className="flow-card__icon flow-card__icon--wrap" aria-hidden>
-              ↓
-            </div>
-            <h2 className="flow-card__title">Wrap</h2>
-            <label className="field-label" htmlFor="wrap-amount">
-              Amount ({underlyingMeta?.symbol ?? "tokens"})
+          <article className={cardClass}>
+            <h2 className="text-lg font-medium lowercase text-white">wrap</h2>
+            <label className="text-xs text-white/60" htmlFor="wrap-amount">
+              amount ({underlyingMeta?.symbol ?? "tokens"})
             </label>
             <input
               id="wrap-amount"
-              className="field-input"
+              className={inputClass}
               type="text"
               inputMode="decimal"
               value={wrapAmount}
@@ -256,43 +238,39 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
             />
             <button
               type="button"
-              className="btn btn--primary"
+              className={btnPrimary}
               onClick={handleWrap}
               disabled={!valid || shield.isPending}
             >
-              {shield.isPending ? "Wrapping…" : "Wrap to confidential"}
+              {shield.isPending ? "wrapping…" : "wrap to confidential"}
             </button>
           </article>
 
-          <article className="flow-card">
-            <div className="flow-card__icon flow-card__icon--unwrap" aria-hidden>
-              ↑
-            </div>
-            <h2 className="flow-card__title">Unwrap</h2>
-            <label className="field-label" htmlFor="unwrap-amount">
-              Amount
+          <article className={cardClass}>
+            <h2 className="text-lg font-medium lowercase text-white">unwrap</h2>
+            <label className="text-xs text-white/60" htmlFor="unwrap-amount">
+              amount
             </label>
             <input
               id="unwrap-amount"
-              className="field-input"
+              className={inputClass}
               type="text"
               inputMode="decimal"
               value={unwrapAmount}
               onChange={(e) => setUnwrapAmount(e.target.value)}
-              placeholder="Leave empty for full balance"
+              placeholder="empty = full balance"
             />
-            <p className="field-hint">Leave blank to unshield your full confidential balance.</p>
+            <p className="text-xs text-white/40">leave blank to unshield everything.</p>
             <button
               type="button"
-              className="btn btn--primary"
+              className={btnPrimary}
               onClick={handleUnwrap}
               disabled={!valid || unshield.isPending || unshieldAll.isPending}
             >
-              {unshield.isPending || unshieldAll.isPending ? "Unshielding…" : "Unwrap to ERC-20"}
+              {unshield.isPending || unshieldAll.isPending ? "unshielding…" : "unwrap to erc-20"}
             </button>
           </article>
         </div>
-        </RevealOnScroll>
       )}
 
       {status && (
@@ -306,6 +284,13 @@ function PairDetailContent({ confidential }: { confidential: `0x${string}` }) {
           )}
         </StatusMessage>
       )}
-    </>
+
+      <Link
+        to="/"
+        className="mt-10 inline-block text-sm text-white/60 transition-colors hover:text-white"
+      >
+        ← back to registry
+      </Link>
+    </PageShell>
   );
 }
