@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAccount } from "wagmi";
 import AddressLink from "../components/AddressLink";
+import RegistryHero from "../components/RegistryHero";
 import StatusMessage from "../components/StatusMessage";
 import { useActiveChainId } from "../context/ViewChainContext";
 import { REGISTRY_ADDRESSES, chainLabel } from "../config";
@@ -54,176 +55,169 @@ export default function Registry() {
 
   return (
     <>
-      <header className="page-hero">
-        <p className="page-hero__eyebrow">On-chain directory</p>
-        <h1 className="page-hero__title">Every official confidential wrapper pair.</h1>
-        <p className="page-hero__lede">
-          Browse ERC-20 ↔ ERC-7984 mappings from the Zama registry. Wrap, decrypt balances with
-          EIP-712, and unwrap on Sepolia or mainnet.
-        </p>
-      </header>
+      <RegistryHero
+        pairCount={totalPairs}
+        networkLabel={chainLabel(activeChainId).toLowerCase()}
+      />
 
-      <section className="panel" aria-labelledby="registry-heading">
-        <div className="panel__head">
-          <div>
-            <h2 id="registry-heading" className="panel__title">
-              Registry
-            </h2>
-            <p className="panel__desc">
-              {totalPairs !== undefined ? (
-                <>
-                  <strong>{totalPairs.toString()}</strong> pairs indexed on{" "}
-                  {chainLabel(activeChainId).toLowerCase()}.
-                </>
-              ) : (
-                "Loading pair count…"
-              )}
-            </p>
-          </div>
-        </div>
-
-        <div className="stat-row">
-          <div className="stat-cell">
-            <span className="stat-cell__label">Network</span>
-            <span className="stat-cell__value">{chainLabel(activeChainId)}</span>
-          </div>
-          <div className="stat-cell">
-            <span className="stat-cell__label">Registry</span>
-            <span className="stat-cell__value">
-              {registryAddress ? (
-                <AddressLink chainId={activeChainId} address={registryAddress} />
-              ) : (
-                "…"
-              )}
-            </span>
-          </div>
-          <div className="stat-cell">
-            <span className="stat-cell__label">Config address</span>
-            <span className="stat-cell__value stat-cell__value--mono">{REGISTRY_ADDRESSES[activeChainId]}</span>
-          </div>
-        </div>
-
-        <div className="toolbar">
-          <label className="search-field">
-            <span className="sr-only">Filter pairs</span>
-            <input
-              type="search"
-              placeholder="Filter by symbol or address…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </label>
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              checked={validOnly}
-              onChange={(e) => {
-                setValidOnly(e.target.checked);
-                setPage(1);
-              }}
-            />
-            Valid only
-          </label>
-          <button type="button" className="btn btn--ghost btn--sm" onClick={() => refetch()} disabled={isFetching}>
-            {isFetching ? "Refreshing…" : "Refresh"}
-          </button>
-        </div>
-
-        {isLoading && <p className="loading-block">Loading pairs</p>}
-        {error && <StatusMessage variant="error">{error.message}</StatusMessage>}
-
-        {!isLoading && !error && (
-          <>
-            <div className="table-scroll">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Status</th>
-                    <th scope="col">Underlying</th>
-                    <th scope="col">Confidential</th>
-                    <th scope="col">
-                      <span className="sr-only">Actions</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.length === 0 && (
-                    <tr>
-                      <td colSpan={4}>
-                        <p className="empty-state">No pairs match this page or filter.</p>
-                      </td>
-                    </tr>
-                  )}
-                  {items.map((pair) => {
-                    const meta =
-                      "underlying" in pair
-                        ? (pair as {
-                            underlying: { symbol: string; name: string };
-                            confidential: { symbol: string; name: string };
-                          })
-                        : null;
-                    return (
-                      <tr key={`${pair.tokenAddress}-${pair.confidentialTokenAddress}`}>
-                        <td>
-                          <span className={pair.isValid ? "badge badge--valid" : "badge badge--revoked"}>
-                            {pair.isValid ? "Valid" : "Revoked"}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="token-stack">
-                            <span className="token-stack__symbol">{meta?.underlying.symbol ?? "ERC-20"}</span>
-                            <span className="token-stack__name">{meta?.underlying.name}</span>
-                            <AddressLink chainId={activeChainId} address={pair.tokenAddress} />
-                          </div>
-                        </td>
-                        <td>
-                          <div className="token-stack">
-                            <span className="token-stack__symbol">
-                              {meta?.confidential.symbol ?? "ERC-7984"}
-                            </span>
-                            <span className="token-stack__name">{meta?.confidential.name}</span>
-                            <AddressLink chainId={activeChainId} address={pair.confidentialTokenAddress} />
-                          </div>
-                        </td>
-                        <td>
-                          <Link
-                            className="btn btn--primary btn--sm"
-                            to={`/pair/${pair.confidentialTokenAddress}`}
-                            state={{ pair }}
-                          >
-                            Open pair
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+      <section
+        id="registry-panel"
+        className="relative z-10 scroll-mt-24 bg-black px-5 pb-24 pt-14 md:px-10 md:pt-20"
+      >
+        <div className="mx-auto max-w-7xl">
+          <header className="mb-10 flex flex-wrap items-end justify-between gap-4 border-b border-white/10 pb-8">
+            <div>
+              <h2 className="text-2xl font-medium lowercase tracking-tight text-white md:text-3xl">
+                all pairs
+              </h2>
+              <p className="mt-1 text-sm text-white/60">
+                {totalPairs !== undefined
+                  ? `${totalPairs.toString()} on ${chainLabel(activeChainId).toLowerCase()}`
+                  : "loading…"}
+              </p>
             </div>
+          </header>
 
-            <div className="pagination">
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                ← Previous
-              </button>
-              <span>
-                Page {page} of {totalPages} · {data?.total ?? 0} total
-              </span>
-              <button
-                type="button"
-                className="btn btn--ghost btn--sm"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next →
-              </button>
+          <div className="mb-8 grid gap-3 sm:grid-cols-2">
+            <div className="pill-surface rounded-2xl px-4 py-3">
+              <p className="text-xs uppercase tracking-wide text-white/50">network</p>
+              <p className="mt-1 text-sm text-white">{chainLabel(activeChainId)}</p>
             </div>
-          </>
-        )}
+            <div className="pill-surface min-w-0 rounded-2xl px-4 py-3 sm:col-span-1">
+              <p className="text-xs uppercase tracking-wide text-white/50">registry</p>
+              <p className="mt-1">
+                {registryAddress ? (
+                  <AddressLink chainId={activeChainId} address={registryAddress} />
+                ) : (
+                  "…"
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="mb-8 flex flex-wrap items-center gap-3">
+            <label className="min-w-[200px] flex-1">
+              <span className="sr-only">filter pairs</span>
+              <input
+                type="search"
+                placeholder="search symbol or address…"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="pill-surface w-full max-w-md rounded-full px-4 py-2.5 text-sm text-white placeholder:text-white/40 focus:border-white/25 focus:outline-none focus:ring-2 focus:ring-white/10"
+              />
+            </label>
+            <label className="flex items-center gap-2 text-sm text-white/70">
+              <input
+                type="checkbox"
+                checked={validOnly}
+                onChange={(e) => {
+                  setValidOnly(e.target.checked);
+                  setPage(1);
+                }}
+                className="rounded border-white/30"
+              />
+              valid only
+            </label>
+            <button
+              type="button"
+              className="rounded-full border border-white/20 px-4 py-2 text-sm text-white/80 transition-colors hover:text-white"
+              onClick={() => refetch()}
+              disabled={isFetching}
+            >
+              {isFetching ? "refreshing…" : "refresh"}
+            </button>
+          </div>
+
+          {isLoading && <p className="py-12 text-center text-white/50">loading pairs…</p>}
+          {error && <StatusMessage variant="error">{error.message}</StatusMessage>}
+
+          {!isLoading && !error && (
+            <>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {items.length === 0 && (
+                  <p className="col-span-full rounded-2xl border border-dashed border-white/15 py-16 text-center text-white/50">
+                    no pairs match this filter
+                  </p>
+                )}
+                {items.map((pair) => {
+                  const meta =
+                    "underlying" in pair
+                      ? (pair as {
+                          underlying: { symbol: string; name: string };
+                          confidential: { symbol: string; name: string };
+                        })
+                      : null;
+                  return (
+                    <article
+                      key={`${pair.tokenAddress}-${pair.confidentialTokenAddress}`}
+                      className="pill-surface flex flex-col gap-4 rounded-2xl p-5 transition-colors hover:border-white/20"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-lg font-medium lowercase text-white">
+                            {meta?.underlying.symbol ?? "erc-20"}
+                            <span className="text-white/50"> → </span>
+                            {meta?.confidential.symbol ?? "erc-7984"}
+                          </p>
+                          <p className="mt-1 text-xs text-white/50">
+                            {meta?.underlying.name}
+                            {meta?.underlying.name && meta?.confidential.name ? " · " : ""}
+                            {meta?.confidential.name}
+                          </p>
+                        </div>
+                        <span
+                          className={[
+                            "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                            pair.isValid
+                              ? "bg-white/15 text-white"
+                              : "bg-white/5 text-white/50 line-through",
+                          ].join(" ")}
+                        >
+                          {pair.isValid ? "valid" : "revoked"}
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <AddressLink chainId={activeChainId} address={pair.tokenAddress} />
+                        <AddressLink chainId={activeChainId} address={pair.confidentialTokenAddress} />
+                      </div>
+                      <Link
+                        to={`/pair/${pair.confidentialTokenAddress}`}
+                        state={{ pair }}
+                        className="mt-auto rounded-full bg-white py-2.5 text-center text-sm text-black transition-colors hover:bg-neutral-200"
+                      >
+                        open pair
+                      </Link>
+                    </article>
+                  );
+                })}
+              </div>
+
+              <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-6 text-sm text-white/60">
+                <button
+                  type="button"
+                  className="rounded-full border border-white/20 px-4 py-2 transition-colors hover:text-white disabled:opacity-40"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  previous
+                </button>
+                <span>
+                  page {page} of {totalPages} · {data?.total ?? 0} total
+                </span>
+                <button
+                  type="button"
+                  className="rounded-full border border-white/20 px-4 py-2 transition-colors hover:text-white disabled:opacity-40"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  next
+                </button>
+              </div>
+            </>
+          )}
+
+          <p className="mt-8 font-mono text-xs text-white/30">{REGISTRY_ADDRESSES[activeChainId]}</p>
+        </div>
       </section>
     </>
   );

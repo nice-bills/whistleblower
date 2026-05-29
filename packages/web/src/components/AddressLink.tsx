@@ -13,7 +13,7 @@ export default function AddressLink({ chainId, address, label }: Props) {
       href={explorerAddress(chainId, address)}
       target="_blank"
       rel="noreferrer"
-      className="mono-link"
+      className="font-mono text-xs text-white/70 underline-offset-2 transition-colors hover:text-white"
       title={address}
     >
       {text}
