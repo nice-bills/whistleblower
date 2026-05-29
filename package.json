@@ -9,7 +9,12 @@
     "test": "pnpm --filter @confidential-whistleblower/contracts test",
     "dev": "pnpm --filter @confidential-wrapper-registry/web dev",
     "build:web": "pnpm --filter @confidential-wrapper-registry/web build",
-    "lint": "pnpm --filter @confidential-whistleblower/contracts lint"
+    "lint": "pnpm --filter @confidential-whistleblower/contracts lint",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
   },
   "engines": {
     "node": ">=20",
