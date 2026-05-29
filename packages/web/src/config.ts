@@ -15,7 +15,18 @@ export function isSupportedChainId(id: number): id is SupportedChainId {
   return id === 1 || id === 11155111;
 }
 
+function explorerBase(chainId: number): string {
+  return chainId === 1 ? "https://etherscan.io" : "https://sepolia.etherscan.io";
+}
+
 export function explorerAddress(chainId: number, address: string): string {
-  const base = chainId === 1 ? "https://etherscan.io" : "https://sepolia.etherscan.io";
-  return `${base}/address/${address}`;
+  return `${explorerBase(chainId)}/address/${address}`;
+}
+
+export function explorerTx(chainId: number, hash: string): string {
+  return `${explorerBase(chainId)}/tx/${hash}`;
+}
+
+export function chainLabel(chainId: number): string {
+  return chainId === 1 ? "Ethereum mainnet" : "Sepolia testnet";
 }

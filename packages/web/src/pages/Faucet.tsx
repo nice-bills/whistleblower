@@ -4,17 +4,23 @@ import { Link } from "react-router-dom";
 import { useAccount, useWriteContract } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import AddressLink from "../components/AddressLink";
-import ConnectWallet from "../components/ConnectWallet";
+import StatusMessage from "../components/StatusMessage";
+import TxLink from "../components/TxLink";
 import {
   DEFAULT_FAUCET_MINT_UNITS,
   MINT_ABI,
   SEPOLIA_MOCK_FAUCET_TOKENS,
 } from "../constants/sepolia-mocks";
 
+type StatusState =
+  | { variant: "success"; message: string; txHash: string }
+  | { variant: "error"; message: string }
+  | null;
+
 export default function Faucet() {
   const { address, chainId, isConnected } = useAccount();
   const { writeContractAsync, isPending } = useWriteContract();
-  const [status, setStatus] = useState<string | null>(null);
+  const [status, setStatus] = useState<StatusState>(null);
   const onSepolia = chainId === sepolia.id;
 
   async function mintToken(token: (typeof SEPOLIA_MOCK_FAUCET_TOKENS)[number]) {
@@ -29,60 +35,84 @@ export default function Faucet() {
         functionName: "mint",
         args: [address, amount],
       });
-      setStatus(`Minted ${DEFAULT_FAUCET_MINT_UNITS.toLocaleString()} ${token.symbol} (underlying). Tx: ${hash}`);
+      setStatus({
+        variant: "success",
+        message: `Minted ${DEFAULT_FAUCET_MINT_UNITS.toLocaleString()} ${token.symbol} underlying.`,
+        txHash: hash,
+      });
     } catch (e) {
-      setStatus(e instanceof Error ? e.message : "Mint failed.");
+      setStatus({
+        variant: "error",
+        message: e instanceof Error ? e.message : "Mint failed.",
+      });
     }
   }
 
   return (
-    <section className="panel">
-      <p>
-        <Link to="/">← Registry</Link>
-      </p>
+    <>
+      <header className="page-hero">
+        <p className="page-hero__eyebrow">Sepolia testnet</p>
+        <h1 className="page-hero__title">Mock token faucet.</h1>
+        <p className="page-hero__lede">
+          Mint official cTokenMock underlyings, then wrap them through any registry pair. One click
+          per token — up to 10,000 units each.
+        </p>
+      </header>
 
-      <div className="panel-header">
-        <div>
-          <h2>Sepolia cTokenMock faucet</h2>
-          <p className="muted">
-            Mint official mock underlying ERC-20s (up to 1M per call on-chain), then wrap them in the
-            registry.
-          </p>
+      <section className="panel">
+        <div className="panel__head">
+          <div>
+            <h2 className="panel__title">cTokenMock underlyings</h2>
+            <p className="panel__desc">Public mint on Sepolia only. Switch network in the header if needed.</p>
+          </div>
         </div>
-        <ConnectWallet />
-      </div>
 
-      {!isConnected && <p className="status">Connect a wallet to mint test tokens.</p>}
-      {isConnected && !onSepolia && (
-        <p className="status warn">Switch to Sepolia — mock mint is only available on testnet.</p>
-      )}
+        {!isConnected && (
+          <StatusMessage variant="info">Connect a wallet in the header to mint test tokens.</StatusMessage>
+        )}
+        {isConnected && !onSepolia && (
+          <StatusMessage variant="warn">Switch to Sepolia — mock mint is only available on testnet.</StatusMessage>
+        )}
 
-      <div className="faucet-grid">
-        {SEPOLIA_MOCK_FAUCET_TOKENS.map((token) => (
-          <article key={token.underlying} className="faucet-card">
-            <h3>{token.name}</h3>
-            <p className="muted small">
-              Underlying <AddressLink chainId={sepolia.id} address={token.underlying} />
-            </p>
-            <p className="muted small">
-              Wrapper{" "}
-              <Link className="link" to={`/pair/${token.confidential}`}>
-                {token.confidential.slice(0, 10)}…
-              </Link>
-            </p>
-            <button
-              type="button"
-              className="btn primary"
-              disabled={!isConnected || !onSepolia || isPending}
-              onClick={() => mintToken(token)}
-            >
-              Mint {DEFAULT_FAUCET_MINT_UNITS.toLocaleString()} {token.symbol}
-            </button>
-          </article>
-        ))}
-      </div>
+        <div className="faucet-grid">
+          {SEPOLIA_MOCK_FAUCET_TOKENS.map((token) => (
+            <article key={token.underlying} className="faucet-card">
+              <h3 className="faucet-card__name">{token.name}</h3>
+              <p className="faucet-card__meta">
+                Underlying · <AddressLink chainId={sepolia.id} address={token.underlying} />
+              </p>
+              <p className="faucet-card__meta">
+                Wrapper ·{" "}
+                <Link to={`/pair/${token.confidential}`} className="mono-link">
+                  {token.confidential.slice(0, 10)}…
+                </Link>
+              </p>
+              <button
+                type="button"
+                className="btn btn--primary"
+                disabled={!isConnected || !onSepolia || isPending}
+                onClick={() => mintToken(token)}
+              >
+                Mint {DEFAULT_FAUCET_MINT_UNITS.toLocaleString()} {token.symbol}
+              </button>
+            </article>
+          ))}
+        </div>
 
-      {status && <p className="status">{status}</p>}
-    </section>
+        {status?.variant === "success" && (
+          <StatusMessage variant="success">
+            {status.message}{" "}
+            <TxLink chainId={sepolia.id} hash={status.txHash} />
+          </StatusMessage>
+        )}
+        {status?.variant === "error" && <StatusMessage variant="error">{status.message}</StatusMessage>}
+      </section>
+
+      <p style={{ marginTop: "1.5rem" }}>
+        <Link to="/" className="page-back">
+          ← Back to registry
+        </Link>
+      </p>
+    </>
   );
 }
